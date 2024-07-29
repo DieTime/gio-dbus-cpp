@@ -32,9 +32,12 @@ int main()
 {
     try {
         Gio::DBus::Connection connection(Gio::DBus::ConnectionType::Session);
-        std::cout << connection << std::endl;
+        Gio::DBus::Proxy proxy(connection,
+                               "org.freedesktop.DBus",
+                               "/org/freedesktop/DBus",
+                               "org.freedesktop.DBus");
 
-        Gio::DBus::Proxy proxy(connection, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus");
+        std::cout << connection << std::endl;
         std::cout << proxy << std::endl;
 
         Gio::DBus::Message message = proxy.call("ListNames");
@@ -42,7 +45,7 @@ int main()
 
         std::cout << "Services:" << std::endl;
         for (const auto &name: names) {
-            std::cout << "  - '" <<  name << "'" << std::endl;
+            std::cout << "  - '" << name << "'" << std::endl;
         }
     }
     catch (const Gio::DBus::Error &error) {
