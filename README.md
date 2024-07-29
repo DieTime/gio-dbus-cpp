@@ -1,6 +1,6 @@
 # gio-dbus-cpp
 
-C++ library for working with DBus based on [gio-2.0](https://docs.gtk.org/gio/index.html).
+C++ DBus library based on [gio-2.0](https://docs.gtk.org/gio/index.html).
 
 ## Building
 
