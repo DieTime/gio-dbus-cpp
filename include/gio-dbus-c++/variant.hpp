@@ -28,7 +28,7 @@ public:
 
 private:
     template<typename T>
-    friend class Details::DBusTypeSerializer;
+    friend struct Details::DBusTypeSerializer;
 
     GVariant *as_gio_variant() const noexcept;
 
