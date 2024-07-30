@@ -3,24 +3,24 @@
 
 #include "common.hpp"
 
-#include <memory>
 #include <stdexcept>
 #include <string>
 
 namespace Gio::DBus {
 
-class ErrorImpl;
-class GIO_DBUS_CPP_EXPORT Error: public std::runtime_error
+class GIO_DBUS_CPP_EXPORT Error: public std::exception
 {
 public:
-    Error(std::string name, std::string message);
-    ~Error() override;
+    Error(std::string name, std::string message) noexcept;
 
     const std::string &name() const noexcept;
     const std::string &message() const noexcept;
 
+    const char *what() const noexcept override;
+
 private:
-    std::unique_ptr<ErrorImpl> m_pimpl;
+    std::string m_name;
+    std::string m_message;
 };
 
 } /* namespace Gio::DBus */
