@@ -18,6 +18,14 @@ The `clang-format-15` and `clang-tidy-15` utilities must be installed.
 ```shell
 $ scripts/lint-clang-format.sh
 $ scripts/lint-clang-tidy.sh
+$ scripts/lint-all.sh
+```
+
+If you have a PVS-Studio licence, you can also perform static code analysis.
+
+```shell
+$ scripts/lint-pvs-studio.sh
+$ scripts/lint-extra.sh
 ```
 
 ## Supported platforms

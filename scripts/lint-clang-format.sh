@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_ROOT=$(dirname "$SCRIPT_PATH")
