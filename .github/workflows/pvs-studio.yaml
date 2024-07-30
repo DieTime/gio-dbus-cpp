@@ -2,10 +2,6 @@ name: PVS-Studio
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
   schedule:
     - cron: "0 0 * * *"
 
@@ -26,8 +22,7 @@ jobs:
           sudo apt install -qq -y pvs-studio
 
       - name: Configure PVS-Studio
-        run:
-          pvs-studio-analyzer credentials ${{ secrets.PVS_STUDIO_CREDENTIALS }}
+        run: pvs-studio-analyzer credentials ${{ secrets.PVS_STUDIO_CREDENTIALS }}
 
       - name: Setup clang++
         run: sudo apt-get install -qq -y clang
