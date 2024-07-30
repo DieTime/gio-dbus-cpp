@@ -12,7 +12,8 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-22.04
-
+    permissions:
+      security-events: write
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
