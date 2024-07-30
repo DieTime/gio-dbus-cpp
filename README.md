@@ -8,7 +8,7 @@ This project uses `meson` build systems.
 
 ```shell
 $ meson setup _
-$ meson compile -C build
+$ meson compile -C _
 ```
 
 ## Linting
