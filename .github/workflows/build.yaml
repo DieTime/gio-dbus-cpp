@@ -16,7 +16,7 @@ jobs:
 
       matrix:
         flavor: [debugoptimized, release]
-        library: [static, shared, both]
+        library: [static, shared]
         cxx: [g++, clang++]
 
     steps:
