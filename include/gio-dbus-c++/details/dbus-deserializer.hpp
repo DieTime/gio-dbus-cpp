@@ -11,11 +11,11 @@
 namespace Gio::DBus::Details {
 
 template<typename T>
-struct DBusTypeDeserializer
+struct DBusDeserializer
 {};
 
 template<>
-struct DBusTypeDeserializer<bool>
+struct DBusDeserializer<bool>
 {
     static bool deserialize(GVariant *message) noexcept
     {
@@ -24,7 +24,7 @@ struct DBusTypeDeserializer<bool>
 };
 
 template<>
-struct DBusTypeDeserializer<uint8_t>
+struct DBusDeserializer<uint8_t>
 {
     static uint8_t deserialize(GVariant *message) noexcept
     {
@@ -33,7 +33,7 @@ struct DBusTypeDeserializer<uint8_t>
 };
 
 template<>
-struct DBusTypeDeserializer<int16_t>
+struct DBusDeserializer<int16_t>
 {
     static int16_t deserialize(GVariant *message) noexcept
     {
@@ -42,7 +42,7 @@ struct DBusTypeDeserializer<int16_t>
 };
 
 template<>
-struct DBusTypeDeserializer<uint16_t>
+struct DBusDeserializer<uint16_t>
 {
     static uint16_t deserialize(GVariant *message) noexcept
     {
@@ -51,7 +51,7 @@ struct DBusTypeDeserializer<uint16_t>
 };
 
 template<>
-struct DBusTypeDeserializer<int32_t>
+struct DBusDeserializer<int32_t>
 {
     static int32_t deserialize(GVariant *message) noexcept
     {
@@ -60,7 +60,7 @@ struct DBusTypeDeserializer<int32_t>
 };
 
 template<>
-struct DBusTypeDeserializer<uint32_t>
+struct DBusDeserializer<uint32_t>
 {
     static uint32_t deserialize(GVariant *message) noexcept
     {
@@ -69,7 +69,7 @@ struct DBusTypeDeserializer<uint32_t>
 };
 
 template<>
-struct DBusTypeDeserializer<int64_t>
+struct DBusDeserializer<int64_t>
 {
     static int64_t deserialize(GVariant *message) noexcept
     {
@@ -78,7 +78,7 @@ struct DBusTypeDeserializer<int64_t>
 };
 
 template<>
-struct DBusTypeDeserializer<uint64_t>
+struct DBusDeserializer<uint64_t>
 {
     static uint64_t deserialize(GVariant *message) noexcept
     {
@@ -87,7 +87,7 @@ struct DBusTypeDeserializer<uint64_t>
 };
 
 template<>
-struct DBusTypeDeserializer<double>
+struct DBusDeserializer<double>
 {
     static double deserialize(GVariant *message) noexcept
     {
@@ -96,7 +96,7 @@ struct DBusTypeDeserializer<double>
 };
 
 template<>
-struct DBusTypeDeserializer<std::string>
+struct DBusDeserializer<std::string>
 {
     static std::string deserialize(GVariant *message)
     {
@@ -105,7 +105,7 @@ struct DBusTypeDeserializer<std::string>
 };
 
 template<typename T, typename Allocator>
-struct DBusTypeDeserializer<std::vector<T, Allocator>>
+struct DBusDeserializer<std::vector<T, Allocator>>
 {
     using Vector = std::vector<T, Allocator>;
 
@@ -120,7 +120,7 @@ struct DBusTypeDeserializer<std::vector<T, Allocator>>
         GVariant *entry = nullptr;
 
         while ((entry = g_variant_iter_next_value(&iterator))) {
-            vector.emplace_back(DBusTypeDeserializer<T>::deserialize(entry));
+            vector.emplace_back(DBusDeserializer<T>::deserialize(entry));
             g_variant_unref(entry);
         }
 
@@ -129,7 +129,7 @@ struct DBusTypeDeserializer<std::vector<T, Allocator>>
 };
 
 template<typename K, typename V, typename Hash, typename Pred, typename Allocator>
-struct DBusTypeDeserializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
+struct DBusDeserializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
 {
     using Map = std::unordered_map<K, V, Hash, Pred, Allocator>;
 
@@ -148,8 +148,8 @@ struct DBusTypeDeserializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
             GVariant *value = g_variant_get_child_value(entry, 1);
 
             map.insert({
-                DBusTypeDeserializer<K>::deserialize(key),
-                DBusTypeDeserializer<V>::deserialize(value),
+                DBusDeserializer<K>::deserialize(key),
+                DBusDeserializer<V>::deserialize(value),
             });
 
             g_variant_unref(entry);
@@ -162,7 +162,7 @@ struct DBusTypeDeserializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
 };
 
 template<typename... T>
-struct DBusTypeDeserializer<std::tuple<T...>>
+struct DBusDeserializer<std::tuple<T...>>
 {
     using Tuple = std::tuple<T...>;
 
@@ -177,7 +177,7 @@ private:
     {
         using GVariantUniquePtr = std::unique_ptr<GVariant, decltype(&g_variant_unref)>;
 
-        return {DBusTypeDeserializer<T>::deserialize(
+        return {DBusDeserializer<T>::deserialize(
             GVariantUniquePtr(g_variant_get_child_value(message, I), &g_variant_unref).get())...};
     }
 };

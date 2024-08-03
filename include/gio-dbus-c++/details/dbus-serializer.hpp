@@ -12,11 +12,11 @@
 namespace Gio::DBus::Details {
 
 template<typename T>
-struct DBusTypeSerializer
+struct DBusSerializer
 {};
 
 template<>
-struct DBusTypeSerializer<bool>
+struct DBusSerializer<bool>
 {
     static GVariant *serialize(bool b) noexcept
     {
@@ -25,7 +25,7 @@ struct DBusTypeSerializer<bool>
 };
 
 template<>
-struct DBusTypeSerializer<uint8_t>
+struct DBusSerializer<uint8_t>
 {
     static GVariant *serialize(uint8_t u8) noexcept
     {
@@ -34,7 +34,7 @@ struct DBusTypeSerializer<uint8_t>
 };
 
 template<>
-struct DBusTypeSerializer<int16_t>
+struct DBusSerializer<int16_t>
 {
     static GVariant *serialize(int16_t i16) noexcept
     {
@@ -43,7 +43,7 @@ struct DBusTypeSerializer<int16_t>
 };
 
 template<>
-struct DBusTypeSerializer<uint16_t>
+struct DBusSerializer<uint16_t>
 {
     static GVariant *serialize(uint16_t u16) noexcept
     {
@@ -52,7 +52,7 @@ struct DBusTypeSerializer<uint16_t>
 };
 
 template<>
-struct DBusTypeSerializer<int32_t>
+struct DBusSerializer<int32_t>
 {
     static GVariant *serialize(int32_t i32) noexcept
     {
@@ -61,7 +61,7 @@ struct DBusTypeSerializer<int32_t>
 };
 
 template<>
-struct DBusTypeSerializer<uint32_t>
+struct DBusSerializer<uint32_t>
 {
     static GVariant *serialize(uint32_t u32) noexcept
     {
@@ -70,7 +70,7 @@ struct DBusTypeSerializer<uint32_t>
 };
 
 template<>
-struct DBusTypeSerializer<int64_t>
+struct DBusSerializer<int64_t>
 {
     static GVariant *serialize(int64_t i64) noexcept
     {
@@ -79,7 +79,7 @@ struct DBusTypeSerializer<int64_t>
 };
 
 template<>
-struct DBusTypeSerializer<uint64_t>
+struct DBusSerializer<uint64_t>
 {
     static GVariant *serialize(uint64_t u64) noexcept
     {
@@ -88,7 +88,7 @@ struct DBusTypeSerializer<uint64_t>
 };
 
 template<>
-struct DBusTypeSerializer<double>
+struct DBusSerializer<double>
 {
     static GVariant *serialize(double d) noexcept
     {
@@ -97,7 +97,7 @@ struct DBusTypeSerializer<double>
 };
 
 template<>
-struct DBusTypeSerializer<std::string>
+struct DBusSerializer<std::string>
 {
     static GVariant *serialize(const std::string &string) noexcept
     {
@@ -106,7 +106,7 @@ struct DBusTypeSerializer<std::string>
 };
 
 template<typename T, typename Allocator>
-struct DBusTypeSerializer<std::vector<T, Allocator>>
+struct DBusSerializer<std::vector<T, Allocator>>
 {
     using Vector = std::vector<T, Allocator>;
 
@@ -116,7 +116,7 @@ struct DBusTypeSerializer<std::vector<T, Allocator>>
         g_variant_builder_init(&builder, dbus_type_to_variant_type_v<Vector>);
 
         for (const T &value: vector) {
-            g_variant_builder_add_value(&builder, DBusTypeSerializer<T>::serialize(value));
+            g_variant_builder_add_value(&builder, DBusSerializer<T>::serialize(value));
         }
 
         return g_variant_builder_end(&builder);
@@ -124,7 +124,7 @@ struct DBusTypeSerializer<std::vector<T, Allocator>>
 };
 
 template<typename K, typename V, typename Hash, typename Pred, typename Allocator>
-struct DBusTypeSerializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
+struct DBusSerializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
 {
     using Map = std::unordered_map<K, V, Hash, Pred, Allocator>;
 
@@ -135,9 +135,8 @@ struct DBusTypeSerializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
 
         for (const auto &[k, v]: map) {
             g_variant_builder_add_value(&builder,
-                                        g_variant_new_dict_entry(DBusTypeSerializer<K>::serialize(k),
-                                                                 DBusTypeSerializer<V>::serialize(
-                                                                     v)));
+                                        g_variant_new_dict_entry(DBusSerializer<K>::serialize(k),
+                                                                 DBusSerializer<V>::serialize(v)));
         }
 
         return g_variant_builder_end(&builder);
@@ -145,7 +144,7 @@ struct DBusTypeSerializer<std::unordered_map<K, V, Hash, Pred, Allocator>>
 };
 
 template<typename... T>
-struct DBusTypeSerializer<std::tuple<T...>>
+struct DBusSerializer<std::tuple<T...>>
 {
     using Tuple = std::tuple<T...>;
 
@@ -162,7 +161,7 @@ private:
         g_variant_builder_init(&builder, dbus_type_to_variant_type_v<Tuple>);
 
         (g_variant_builder_add_value(&builder,
-                                     DBusTypeSerializer<std::tuple_element_t<I, Tuple>>::serialize(
+                                     DBusSerializer<std::tuple_element_t<I, Tuple>>::serialize(
                                          std::get<I>(tuple))),
          ...);
 

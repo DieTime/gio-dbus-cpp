@@ -40,8 +40,7 @@ int main()
         std::cout << connection << std::endl;
         std::cout << proxy << std::endl;
 
-        Gio::DBus::Message message = proxy.call("ListNames");
-        auto [names] = message.as<std::tuple<std::vector<std::string>>>();
+        std::vector<std::string> names = proxy.call("ListNames");
 
         std::cout << "Services:" << std::endl;
         for (const auto &name: names) {

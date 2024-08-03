@@ -26,15 +26,13 @@ public:
                     Timeout timeout);
 
 private:
+    static void on_async_call_ready(GObject *object, GAsyncResult *result, gpointer user_data);
+
     std::string m_service;
     std::string m_object;
     std::string m_interface;
     std::unique_ptr<GDBusProxy, decltype(&g_object_unref)> m_proxy;
 };
-
-} /* namespace Gio::DBus */
-
-namespace {
 
 struct AsyncCallContext
 {
@@ -43,35 +41,6 @@ struct AsyncCallContext
     std::function<void(const Gio::DBus::Message &)> on_success;
     std::function<void(const Gio::DBus::Error &)> on_error;
 };
-
-void on_async_call_ready(GObject *object, GAsyncResult *result, gpointer user_data)
-{
-    AsyncCallContext *context = reinterpret_cast<decltype(context)>(user_data);
-
-    GError *error = nullptr;
-    GDBusProxy *proxy = reinterpret_cast<decltype(proxy)>(object);
-
-    Gio::DBus::Message message = g_dbus_proxy_call_finish(proxy, result, &error);
-
-    if (error) {
-        context->on_error(Gio::DBus::Error(GIO_DBUS_CPP_ERROR_NAME,
-                                           std::string("Failed to call ")
-                                               + context->proxy_impl.interface() + "."
-                                               + context->method + "() method using proxy for "
-                                               + context->proxy_impl.service() + " service on "
-                                               + context->proxy_impl.object() + " object path ("
-                                               + error->message + ")"));
-        g_error_free(error);
-    } else {
-        context->on_success(message);
-    }
-
-    delete context;
-}
-
-} /* namespace */
-
-namespace Gio::DBus {
 
 ProxyImpl::ProxyImpl(Connection &connection,
                      std::string service,
@@ -161,6 +130,31 @@ void ProxyImpl::call_async(std::string_view method,
                           std::move(on_success),
                           std::move(on_error),
                       });
+}
+
+void ProxyImpl::on_async_call_ready(GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    AsyncCallContext *context = reinterpret_cast<decltype(context)>(user_data);
+
+    GError *error = nullptr;
+    GDBusProxy *proxy = reinterpret_cast<decltype(proxy)>(object);
+
+    Gio::DBus::Message message = g_dbus_proxy_call_finish(proxy, result, &error);
+
+    if (error) {
+        context->on_error(Gio::DBus::Error(GIO_DBUS_CPP_ERROR_NAME,
+                                           std::string("Failed to call ")
+                                               + context->proxy_impl.interface() + "."
+                                               + context->method + "() method using proxy for "
+                                               + context->proxy_impl.service() + " service on "
+                                               + context->proxy_impl.object() + " object path ("
+                                               + error->message + ")"));
+        g_error_free(error);
+    } else {
+        context->on_success(message);
+    }
+
+    delete context;
 }
 
 Proxy::Proxy(Connection &connection,

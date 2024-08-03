@@ -1,8 +1,8 @@
 #ifndef GIO_DBUS_CPP_VARIANT_HPP
 #define GIO_DBUS_CPP_VARIANT_HPP
 
-#include "details/dbus-type-deserializer.hpp"
-#include "details/dbus-type-serializer.hpp"
+#include "details/dbus-deserializer.hpp"
+#include "details/dbus-serializer.hpp"
 #include "details/dbus-type-traits.hpp"
 #include "details/exception.hpp"
 
@@ -15,38 +15,61 @@ class Variant
 {
 public:
     template<typename T>
-    Variant(const T &value);    /* NOLINT(google-explicit-constructor) */
-    Variant(GVariant *variant); /* NOLINT(google-explicit-constructor) */
+    Variant(const T &value); /* NOLINT(google-explicit-constructor) */
 
-    std::string_view type() const noexcept;
+    Variant(GVariant *variant) /* NOLINT(google-explicit-constructor) */
+        : m_variant(variant, &g_variant_unref)
+    {}
+
+    std::string_view dbus_type_signature() const noexcept
+    {
+        const char *type_signature = g_variant_get_type_string(m_variant.get());
+
+        if (!type_signature) {
+            return {"?"};
+        }
+
+        return {type_signature};
+    }
 
     template<typename T>
-    bool is() const;
+    bool contains_value_of_type() const noexcept
+    {
+        using namespace Details;
+
+        static_assert(is_dbus_type_v<T>,
+                      "Attempt to check whether Gio::DBus::Variant stores a value of type T using "
+                      "Gio::DBus::Variant::is<T>(), but T is not a dbus type");
+
+        return g_variant_is_of_type(as_gio_variant(), dbus_type_to_variant_type_v<T>);
+    }
 
     template<typename T>
     T as() const;
 
 private:
     template<typename T>
-    friend struct Details::DBusTypeSerializer;
+    friend struct Details::DBusSerializer;
 
-    GVariant *as_gio_variant() const noexcept;
+    GVariant *as_gio_variant() const noexcept
+    {
+        return m_variant.get();
+    }
 
-private:
     std::unique_ptr<GVariant, decltype(&g_variant_unref)> m_variant;
 };
 
 namespace Details {
 
 template<>
-struct DBusType<Gio::DBus::Variant>: public std::true_type
+struct DBusType<Gio::DBus::Variant>: std::true_type
 {
-    static inline const std::string name = "v";
-    static inline const std::string class_name = "Gio::DBus::Variant";
+    static constexpr auto name = "v"_cts;
+    static constexpr auto class_name = "Gio::DBus::Variant"_cts;
 };
 
 template<>
-struct DBusTypeSerializer<Gio::DBus::Variant>
+struct DBusSerializer<Gio::DBus::Variant>
 {
     static GVariant *serialize(const Gio::DBus::Variant &variant) noexcept
     {
@@ -55,7 +78,7 @@ struct DBusTypeSerializer<Gio::DBus::Variant>
 };
 
 template<>
-struct DBusTypeDeserializer<Gio::DBus::Variant>
+struct DBusDeserializer<Gio::DBus::Variant>
 {
     static Gio::DBus::Variant deserialize(GVariant *message)
     {
@@ -67,80 +90,52 @@ struct DBusTypeDeserializer<Gio::DBus::Variant>
 
 template<typename T>
 Variant::Variant(const T &value)
+    : m_variant(nullptr, &g_variant_unref)
 {
-    static_assert(Details::is_dbus_type_v<T>(),
+    using namespace Details;
+
+    static_assert(is_dbus_type_v<T>(),
                   "Attempt to construct Gio::DBus::Variant from value of type T using "
                   "Gio::DBus::Variant::Variant<T>(const T &), but T is not a dbus type");
 
     try {
-        m_variant = std::make_unique<GVariant, &g_variant_unref>(
-            Details::DBusTypeSerializer<T>::serialize(value), &g_variant_unref);
+        m_variant.reset(g_varaiant_ref(DBusSerializer<T>::serialize(value)));
     }
     catch (const std::exception &err) {
         THROW_GIO_DBUS_CPP_ERROR(
             std::string("Failed to construct Gio::DBus::Variant from value of type T (aka ")
-            + Details::DBusType<T>::class_name.data() + " aka " + Details::DBusType<T>::name.data()
+            + DBusType<T>::class_name.data() + " aka " + DBusType<T>::name.data()
             + ") using Gio::DBus::Message::Message<T>(const T &)" + " (" + err.what() + ")");
     }
-}
-
-Variant::Variant(GVariant *variant) /* NOLINT(google-explicit-constructor) */
-    : m_variant(variant, &g_variant_unref)
-{}
-
-std::string_view Variant::type() const noexcept
-{
-    const char *type = g_variant_get_type_string(m_variant.get());
-
-    if (!type) {
-        return {"unknown"};
-    }
-
-    return {type};
-}
-
-template<typename T>
-bool Variant::is() const
-{
-    static_assert(Details::is_dbus_type_v<T>,
-                  "Attempt to check whether Gio::DBus::Variant stores a value of type T using "
-                  "Gio::DBus::Variant::is<T>(), but T is not a dbus type");
-
-    return g_variant_is_of_type(const_cast<GVariant *>(m_variant.get()),
-                                Details::dbus_type_to_variant_type_v<T>);
 }
 
 template<typename T>
 T Variant::as() const
 {
-    static_assert(Details::is_dbus_type_v<T>,
+    using namespace Details;
+
+    static_assert(is_dbus_type_v<T>,
                   "Attempt to read a value of type T using Gio::DBus::Variant::as<T>(), "
                   "but T is not a dbus type");
 
-    if (!is<T>()) {
+    if (!contains_value_of_type<T>()) {
         THROW_GIO_DBUS_CPP_ERROR(std::string("Attempt to read a value of type T (aka ")
-                                 + Details::DBusType<T>::class_name.data() + " aka "
-                                 + Details::DBusType<T>::name.data()
+                                 + DBusType<T>::class_name.data() + " aka "
+                                 + DBusType<T>::name.data()
                                  + ") using Gio::DBus::Variant::as<T>(), "
                                    "but Gio::DBus::Variant contains value of type "
-                                 + type().data());
+                                 + dbus_type_signature().data());
     }
 
     try {
-        return Details::DBusTypeDeserializer<T>::deserialize(
-            const_cast<GVariant *>(m_variant.get()));
+        return DBusDeserializer<T>::deserialize(as_gio_variant());
     }
     catch (const std::exception &err) {
         THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to read a value of type T (aka ")
-                                 + Details::DBusType<T>::class_name.data() + " aka "
-                                 + Details::DBusType<T>::name.data()
+                                 + DBusType<T>::class_name.data() + " aka "
+                                 + DBusType<T>::name.data()
                                  + ") using Gio::DBus::Variant::as<T>() (" + err.what() + ")");
     }
-}
-
-GVariant *Variant::as_gio_variant() const noexcept
-{
-    return m_variant.get();
 }
 
 } /* namespace Gio::DBus */
