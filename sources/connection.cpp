@@ -43,26 +43,19 @@ private:
 ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
     : m_connection(nullptr, &g_object_unref)
 {
-    GError *error = nullptr;
+    GError *_error = nullptr;
     GDBusConnection *connection = g_bus_get_sync(connection_type == ConnectionType::System
                                                      ? G_BUS_TYPE_SYSTEM
                                                      : G_BUS_TYPE_SESSION,
                                                  nullptr,
-                                                 &error);
+                                                 &_error);
+
+    std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        std::string error_message = error->message;
-        g_error_free(error);
-
         THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create ")
                                  + connection_type_to_string(connection_type).data()
-                                 + " dbus connection (" + error_message + ")");
-    }
-
-    const char *unique_name = g_dbus_connection_get_unique_name(connection);
-
-    if (!unique_name) {
-        THROW_GIO_DBUS_CPP_ERROR("Failed to get unique name of the created dbus connection");
+                                 + " dbus connection (" + error->message + ")");
     }
 
     setup_unique_name_with_connection(connection);
@@ -71,19 +64,18 @@ ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
 ConnectionImpl::ConnectionImpl(std::string_view address)
     : m_connection(nullptr, &g_object_unref)
 {
-    GError *error = nullptr;
+    GError *_error = nullptr;
     GDBusConnection *connection = g_dbus_connection_new_for_address_sync(address.data(),
                                                                          G_DBUS_CONNECTION_FLAGS_NONE,
                                                                          nullptr,
                                                                          nullptr,
-                                                                         &error);
+                                                                         &_error);
+
+    std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        std::string error_message = error->message;
-        g_error_free(error);
-
         THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create dbus connection for ")
-                                 + address.data() + " address " + "(" + error_message + ")");
+                                 + address.data() + " address " + "(" + error->message + ")");
     }
 
     setup_unique_name_with_connection(connection);
