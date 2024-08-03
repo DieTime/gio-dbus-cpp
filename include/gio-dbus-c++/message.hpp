@@ -45,17 +45,6 @@ public:
         }
     }
 
-    std::string_view dbus_type_signature() const noexcept
-    {
-        const char *type_signature = g_variant_get_type_string(m_variant.get());
-
-        if (!type_signature) {
-            return {"?"};
-        }
-
-        return {type_signature};
-    }
-
     template<typename T>
     bool contains_value_of_type() const
     {
@@ -84,7 +73,7 @@ public:
                                          + DBusType<T>::name.data()
                                          + ") using Gio::DBus::Message::as<T>(), "
                                            "but Gio::DBus::Message contains value of type "
-                                         + dbus_type_signature().data());
+                                         + dbus_type_signature());
             }
         } else {
             if (!contains_value_of_type<std::tuple<T>>()) {
@@ -93,7 +82,7 @@ public:
                     + DBusType<T>::class_name.data() + "> aka (" + DBusType<T>::name.data()
                     + ")) using Gio::DBus::Message::as<T>(), "
                       "but Gio::DBus::Message contains value of type "
-                    + dbus_type_signature().data());
+                    + dbus_type_signature());
             }
         }
 
@@ -130,6 +119,17 @@ private:
         }
 
         m_variant = std::unique_ptr<GVariant, decltype(&g_variant_unref)>(variant, &g_variant_unref);
+    }
+
+    const char *dbus_type_signature() const noexcept
+    {
+        const char *type_signature = g_variant_get_type_string(m_variant.get());
+
+        if (!type_signature) {
+            return "?";
+        }
+
+        return type_signature;
     }
 
     GVariant *as_gio_variant() const noexcept

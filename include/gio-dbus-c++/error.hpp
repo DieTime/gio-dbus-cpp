@@ -5,7 +5,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <string_view>
 
 namespace Gio::DBus {
 
@@ -16,8 +15,8 @@ public:
     Error(std::string name, std::string message) noexcept;
     ~Error() override;
 
-    std::string_view name() const noexcept;
-    std::string_view message() const noexcept;
+    const std::string &name() const noexcept;
+    const std::string &message() const noexcept;
 
     const char *what() const noexcept override;
 

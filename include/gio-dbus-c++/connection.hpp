@@ -6,7 +6,7 @@
 #include "gio-types.hpp"
 
 #include <memory>
-#include <string_view>
+#include <string>
 
 namespace Gio::DBus {
 
@@ -15,7 +15,7 @@ class GIO_DBUS_CPP_EXPORT Connection
 {
 public:
     explicit Connection(ConnectionType connection_type);
-    explicit Connection(std::string_view address);
+    explicit Connection(const std::string &address);
 
     virtual ~Connection();
 

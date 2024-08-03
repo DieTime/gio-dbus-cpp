@@ -7,15 +7,15 @@
 
 namespace {
 
-std::string_view connection_type_to_string(Gio::DBus::ConnectionType connection_type) noexcept
+const char *connection_type_to_string(Gio::DBus::ConnectionType connection_type) noexcept
 {
     switch (connection_type) {
     case Gio::DBus::ConnectionType::System:
-        return {"system"};
+        return "system";
     case Gio::DBus::ConnectionType::Session:
-        return {"session"};
+        return "session";
     default:
-        return {"unknown"};
+        return "unknown";
     }
 }
 
@@ -27,7 +27,7 @@ class ConnectionImpl
 {
 public:
     explicit ConnectionImpl(ConnectionType connection_type);
-    explicit ConnectionImpl(std::string_view address);
+    explicit ConnectionImpl(const std::string &address);
 
     const std::string &unique_name() const noexcept;
 
@@ -54,14 +54,14 @@ ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
 
     if (error) {
         THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create ")
-                                 + connection_type_to_string(connection_type).data()
-                                 + " dbus connection (" + error->message + ")");
+                                 + connection_type_to_string(connection_type) + " dbus connection ("
+                                 + error->message + ")");
     }
 
     setup_unique_name_with_connection(connection);
 }
 
-ConnectionImpl::ConnectionImpl(std::string_view address)
+ConnectionImpl::ConnectionImpl(const std::string &address)
     : m_connection(nullptr, &g_object_unref)
 {
     GError *_error = nullptr;
@@ -74,8 +74,8 @@ ConnectionImpl::ConnectionImpl(std::string_view address)
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create dbus connection for ")
-                                 + address.data() + " address " + "(" + error->message + ")");
+        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create dbus connection for ") + address
+                                 + " address " + "(" + error->message + ")");
     }
 
     setup_unique_name_with_connection(connection);
@@ -105,6 +105,10 @@ GDBusConnection *ConnectionImpl::as_gio_connection() const
 
 Connection::Connection(ConnectionType connection_type)
     : m_pimpl(std::make_unique<ConnectionImpl>(connection_type))
+{}
+
+Connection::Connection(const std::string &address)
+    : m_pimpl(std::make_unique<ConnectionImpl>(address))
 {}
 
 Connection::~Connection() = default;

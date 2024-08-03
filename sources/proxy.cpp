@@ -19,8 +19,8 @@ public:
     const std::string &object() const noexcept;
     const std::string &interface() const noexcept;
 
-    Message call(std::string_view method, Timeout timeout);
-    void call_async(std::string_view method,
+    Message call(const std::string &method, Timeout timeout);
+    void call_async(const std::string &method,
                     std::function<void(const Message &)> on_success,
                     std::function<void(const Error &)> on_error,
                     Timeout timeout);
@@ -87,7 +87,7 @@ const std::string &ProxyImpl::interface() const noexcept
     return m_interface;
 }
 
-Message ProxyImpl::call(std::string_view method, Timeout timeout)
+Message ProxyImpl::call(const std::string &method, Timeout timeout)
 {
     GError *_error = nullptr;
     Message message = g_dbus_proxy_call_sync(m_proxy.get(),
@@ -103,7 +103,7 @@ Message ProxyImpl::call(std::string_view method, Timeout timeout)
     if (error) {
         THROW_GIO_DBUS_CPP_ERROR(
             std::string("Failed to call ") + g_dbus_proxy_get_interface_name(m_proxy.get()) + "."
-            + method.data() + "() method using proxy for " + g_dbus_proxy_get_name(m_proxy.get())
+            + method + "() method using proxy for " + g_dbus_proxy_get_name(m_proxy.get())
             + " service on " + g_dbus_proxy_get_object_path(m_proxy.get()) + " object path ("
             + error->message + ")");
     }
@@ -111,7 +111,7 @@ Message ProxyImpl::call(std::string_view method, Timeout timeout)
     return message;
 }
 
-void ProxyImpl::call_async(std::string_view method,
+void ProxyImpl::call_async(const std::string &method,
                            std::function<void(const Message &)> on_success,
                            std::function<void(const Error &)> on_error,
                            Timeout timeout)
@@ -125,7 +125,7 @@ void ProxyImpl::call_async(std::string_view method,
                       on_async_call_ready,
                       new AsyncCallContext{
                           *this,
-                          std::string(method),
+                          method,
                           std::move(on_success),
                           std::move(on_error),
                       });
@@ -181,12 +181,12 @@ const std::string &Proxy::interface() const noexcept
     return m_pimpl->interface();
 }
 
-Message Proxy::call(std::string_view method, Timeout timeout)
+Message Proxy::call(const std::string &method, Timeout timeout)
 {
     return m_pimpl->call(method, timeout);
 }
 
-void Proxy::call_async(std::string_view method,
+void Proxy::call_async(const std::string &method,
                        std::function<void(const Message &)> on_success,
                        std::function<void(const Error &)> on_error,
                        Timeout timeout)

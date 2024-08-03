@@ -8,7 +8,7 @@
 
 #include <functional>
 #include <memory>
-#include <string_view>
+#include <string>
 
 namespace Gio::DBus {
 
@@ -25,8 +25,8 @@ public:
     const std::string &object() const noexcept;
     const std::string &interface() const noexcept;
 
-    Message call(std::string_view method, Timeout timeout = Timeout::Default);
-    void call_async(std::string_view method,
+    Message call(const std::string &method, Timeout timeout = Timeout::Default);
+    void call_async(const std::string &method,
                     std::function<void(const Message &)> on_success,
                     std::function<void(const Error &)> on_error,
                     Timeout timeout = Timeout::Default);

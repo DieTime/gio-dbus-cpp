@@ -21,17 +21,6 @@ public:
         : m_variant(variant, &g_variant_unref)
     {}
 
-    std::string_view dbus_type_signature() const noexcept
-    {
-        const char *type_signature = g_variant_get_type_string(m_variant.get());
-
-        if (!type_signature) {
-            return {"?"};
-        }
-
-        return {type_signature};
-    }
-
     template<typename T>
     bool contains_value_of_type() const noexcept
     {
@@ -50,6 +39,17 @@ public:
 private:
     template<typename T>
     friend struct Details::DBusSerializer;
+
+    const char *dbus_type_signature() const noexcept
+    {
+        const char *type_signature = g_variant_get_type_string(m_variant.get());
+
+        if (!type_signature) {
+            return "?";
+        }
+
+        return type_signature;
+    }
 
     GVariant *as_gio_variant() const noexcept
     {
@@ -124,7 +124,7 @@ T Variant::as() const
                                  + DBusType<T>::name.data()
                                  + ") using Gio::DBus::Variant::as<T>(), "
                                    "but Gio::DBus::Variant contains value of type "
-                                 + dbus_type_signature().data());
+                                 + dbus_type_signature());
     }
 
     try {

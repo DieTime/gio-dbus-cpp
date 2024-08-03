@@ -8,8 +8,8 @@ class ErrorImpl
 public:
     ErrorImpl(std::string name, std::string message);
 
-    std::string_view name() const noexcept;
-    std::string_view message() const noexcept;
+    const std::string &name() const noexcept;
+    const std::string &message() const noexcept;
 
 private:
     std::string m_name;
@@ -21,12 +21,12 @@ ErrorImpl::ErrorImpl(std::string name, std::string message)
     , m_message(std::move(message))
 {}
 
-std::string_view ErrorImpl::name() const noexcept
+const std::string &ErrorImpl::name() const noexcept
 {
     return m_name;
 }
 
-std::string_view ErrorImpl::message() const noexcept
+const std::string &ErrorImpl::message() const noexcept
 {
     return m_message;
 }
@@ -37,22 +37,24 @@ Error::Error(std::string name, std::string message) noexcept
 
 Error::~Error() = default;
 
-std::string_view Error::name() const noexcept
+const std::string &Error::name() const noexcept
 {
     if (m_pimpl) {
         return m_pimpl->name();
     }
 
-    return {GIO_DBUS_CPP_ERROR_NAME};
+    static std::string name = GIO_DBUS_CPP_ERROR_NAME;
+    return name;
 }
 
-std::string_view Error::message() const noexcept
+const std::string &Error::message() const noexcept
 {
     if (m_pimpl) {
         return m_pimpl->message();
     }
 
-    return {"Empty (Failed to receive an error message)"};
+    static std::string message = "Empty (Failed to receive an error message)";
+    return message;
 }
 
 const char *Error::what() const noexcept
