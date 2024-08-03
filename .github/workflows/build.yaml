@@ -56,3 +56,6 @@ jobs:
 
     - name: Build
       run: meson compile -C builddir -v
+
+    - name: Run example
+      run: builddir/samples/proxy
