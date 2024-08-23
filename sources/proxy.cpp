@@ -4,6 +4,7 @@
 #include "details/exception.hpp"
 
 #include <gio/gio.h>
+#include <optional>
 
 namespace Gio::DBus {
 
@@ -19,11 +20,18 @@ public:
     const std::string &object() const noexcept;
     const std::string &interface() const noexcept;
 
-    Message call(const std::string &method, Timeout timeout);
+    Message call(const std::string &method, const Timeout &timeout);
+    Message call(const std::string &method, const Message &arguments, const Timeout &timeout);
+
     void call_async(const std::string &method,
-                    std::function<void(const Message &)> on_success,
-                    std::function<void(const Error &)> on_error,
-                    Timeout timeout);
+                    const std::function<void(const Message &)> &on_success,
+                    const std::function<void(const Error &)> &on_error,
+                    const Timeout &timeout);
+    void call_async(const std::string &method,
+                    const Message &arguments,
+                    const std::function<void(const Message &)> &on_success,
+                    const std::function<void(const Error &)> &on_error,
+                    const Timeout &timeout);
 
 private:
     static void on_async_call_ready(GObject *object, GAsyncResult *result, gpointer user_data);
@@ -52,14 +60,14 @@ ProxyImpl::ProxyImpl(Connection &connection,
     , m_proxy(nullptr, &g_object_unref)
 {
     GError *_error = nullptr;
-    GDBusProxy *proxy = g_dbus_proxy_new_sync(connection.as_gio_connection(),
-                                              G_DBUS_PROXY_FLAGS_NONE,
-                                              nullptr,
-                                              m_service.data(),
-                                              m_object.c_str(),
-                                              m_interface.data(),
-                                              nullptr,
-                                              &_error);
+    GDBusProxy *_proxy = g_dbus_proxy_new_sync(connection.as_gio_connection(),
+                                               G_DBUS_PROXY_FLAGS_NONE,
+                                               nullptr,
+                                               m_service.data(),
+                                               m_object.c_str(),
+                                               m_interface.data(),
+                                               nullptr,
+                                               &_error);
 
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
@@ -69,7 +77,7 @@ ProxyImpl::ProxyImpl(Connection &connection,
                                  + " interface (" + error->message + ")");
     }
 
-    m_proxy.reset(proxy);
+    m_proxy.reset(_proxy);
 }
 
 const std::string &ProxyImpl::service() const noexcept
@@ -87,34 +95,56 @@ const std::string &ProxyImpl::interface() const noexcept
     return m_interface;
 }
 
-Message ProxyImpl::call(const std::string &method, Timeout timeout)
+Message ProxyImpl::call(const std::string &method, const Timeout &timeout)
 {
     GError *_error = nullptr;
-    Message message = g_dbus_proxy_call_sync(m_proxy.get(),
-                                             method.data(),
-                                             nullptr,
-                                             G_DBUS_CALL_FLAGS_NONE,
-                                             timeout.milliseconds(),
-                                             nullptr,
-                                             &_error);
+    GVariant *_variant = g_dbus_proxy_call_sync(m_proxy.get(),
+                                                method.data(),
+                                                nullptr,
+                                                G_DBUS_CALL_FLAGS_NONE,
+                                                timeout.milliseconds(),
+                                                nullptr,
+                                                &_error);
 
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
+    std::unique_ptr<GVariant, decltype(&g_variant_unref)> variant(_variant, &g_variant_unref);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(
-            std::string("Failed to call ") + g_dbus_proxy_get_interface_name(m_proxy.get()) + "."
-            + method + "() method using proxy for " + g_dbus_proxy_get_name(m_proxy.get())
-            + " service on " + g_dbus_proxy_get_object_path(m_proxy.get()) + " object path ("
-            + error->message + ")");
+        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to call ") + interface() + "." + method
+                                 + "() method using proxy for " + service() + " service on "
+                                 + object() + " object path (" + error->message + ")");
     }
 
-    return message;
+    return {variant.release()};
+}
+
+Message ProxyImpl::call(const std::string &method, const Message &arguments, const Timeout &timeout)
+{
+    GError *_error = nullptr;
+    GVariant *_variant = g_dbus_proxy_call_sync(m_proxy.get(),
+                                                method.data(),
+                                                arguments.as_gio_variant(),
+                                                G_DBUS_CALL_FLAGS_NONE,
+                                                timeout.milliseconds(),
+                                                nullptr,
+                                                &_error);
+
+    std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
+    std::unique_ptr<GVariant, decltype(&g_variant_unref)> variant(_variant, &g_variant_unref);
+
+    if (error) {
+        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to call ") + interface() + "." + method
+                                 + "() method using proxy for " + service() + " service on "
+                                 + object() + " object path (" + error->message + ")");
+    }
+
+    return {variant.release()};
 }
 
 void ProxyImpl::call_async(const std::string &method,
-                           std::function<void(const Message &)> on_success,
-                           std::function<void(const Error &)> on_error,
-                           Timeout timeout)
+                           const std::function<void(const Message &)> &on_success,
+                           const std::function<void(const Error &)> &on_error,
+                           const Timeout &timeout)
 {
     g_dbus_proxy_call(m_proxy.get(),
                       method.data(),
@@ -126,19 +156,40 @@ void ProxyImpl::call_async(const std::string &method,
                       new AsyncCallContext{
                           *this,
                           method,
-                          std::move(on_success),
-                          std::move(on_error),
+                          on_success,
+                          on_error,
+                      });
+}
+
+void ProxyImpl::call_async(const std::string &method,
+                           const Message &arguments,
+                           const std::function<void(const Message &)> &on_success,
+                           const std::function<void(const Error &)> &on_error,
+                           const Timeout &timeout)
+{
+    g_dbus_proxy_call(m_proxy.get(),
+                      method.data(),
+                      arguments.as_gio_variant(),
+                      G_DBUS_CALL_FLAGS_NONE,
+                      timeout.milliseconds(),
+                      nullptr,
+                      on_async_call_ready,
+                      new AsyncCallContext{
+                          *this,
+                          method,
+                          on_success,
+                          on_error,
                       });
 }
 
 void ProxyImpl::on_async_call_ready(GObject *object, GAsyncResult *result, gpointer user_data)
 {
     GError *_error = nullptr;
-    GDBusProxy *proxy = reinterpret_cast<decltype(proxy)>(object);
-
-    Gio::DBus::Message message = g_dbus_proxy_call_finish(proxy, result, &_error);
+    GDBusProxy *_proxy = reinterpret_cast<decltype(_proxy)>(object);
+    GVariant *_variant = g_dbus_proxy_call_finish(_proxy, result, &_error);
 
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
+    std::unique_ptr<GVariant, decltype(&g_variant_unref)> variant(_variant, &g_variant_unref);
     std::unique_ptr<AsyncCallContext> context(reinterpret_cast<AsyncCallContext *>(user_data));
 
     if (error) {
@@ -150,7 +201,17 @@ void ProxyImpl::on_async_call_ready(GObject *object, GAsyncResult *result, gpoin
                                                + context->proxy_impl.object() + " object path ("
                                                + error->message + ")"));
     } else {
-        context->on_success(message);
+        std::optional<Message> message;
+
+        try {
+            message = Message(variant.release());
+        }
+        catch (const Error &error) {
+            context->on_error(error);
+            return;
+        }
+
+        context->on_success(*message);
     }
 }
 
@@ -181,17 +242,31 @@ const std::string &Proxy::interface() const noexcept
     return m_pimpl->interface();
 }
 
-Message Proxy::call(const std::string &method, Timeout timeout)
+Message Proxy::call(const std::string &method, const Timeout &timeout)
 {
     return m_pimpl->call(method, timeout);
 }
 
-void Proxy::call_async(const std::string &method,
-                       std::function<void(const Message &)> on_success,
-                       std::function<void(const Error &)> on_error,
-                       Timeout timeout)
+Message Proxy::call(const std::string &method, const Message &arguments, const Timeout &timeout)
 {
-    m_pimpl->call_async(method, std::move(on_success), std::move(on_error), timeout);
+    return m_pimpl->call(method, arguments, timeout);
+}
+
+void Proxy::call_async(const std::string &method,
+                       const std::function<void(const Message &)> &on_success,
+                       const std::function<void(const Error &)> &on_error,
+                       const Timeout &timeout)
+{
+    m_pimpl->call_async(method, on_success, on_error, timeout);
+}
+
+void Proxy::call_async(const std::string &method,
+                       const Message &arguments,
+                       const std::function<void(const Message &)> &on_success,
+                       const std::function<void(const Error &)> &on_error,
+                       const Timeout &timeout)
+{
+    m_pimpl->call_async(method, arguments, on_success, on_error, timeout);
 }
 
 } /* namespace Gio::DBus */

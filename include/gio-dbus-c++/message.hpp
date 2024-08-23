@@ -111,14 +111,12 @@ private:
     friend class ProxyImpl;
 
     Message(GVariant *variant) /* NOLINT(google-explicit-constructor) */
-        : m_variant(nullptr, &g_variant_unref)
+        : m_variant(variant, &g_variant_unref)
     {
         if (!g_variant_is_of_type(variant, G_VARIANT_TYPE_TUPLE)) {
             THROW_GIO_DBUS_CPP_ERROR("Attempt to construct Gio::DBus::Message using a GVariant "
                                      "that is not a tuple type");
         }
-
-        m_variant = std::unique_ptr<GVariant, decltype(&g_variant_unref)>(variant, &g_variant_unref);
     }
 
     const char *dbus_type_signature() const noexcept
