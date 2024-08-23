@@ -114,7 +114,7 @@ struct DBusType<std::tuple<T, R...>>: std::true_type
 };
 
 template<typename T>
-constexpr bool is_dbus_type_v = DBusType<T>::value;
+constexpr bool is_dbus_type_v = DBusType<std::decay_t<T>>::value;
 
 template<typename T>
 const GVariantType *dbus_type_to_variant_type_v = reinterpret_cast<const GVariantType *>(
