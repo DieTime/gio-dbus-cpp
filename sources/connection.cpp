@@ -26,8 +26,8 @@ namespace Gio::DBus {
 class ConnectionImpl
 {
 public:
-    explicit ConnectionImpl(ConnectionType connection_type);
-    explicit ConnectionImpl(const std::string &address);
+    ConnectionImpl(ConnectionType connection_type);
+    ConnectionImpl(const std::string &address);
 
     const std::string &unique_name() const noexcept;
 

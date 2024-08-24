@@ -1,6 +1,10 @@
 #ifndef GIO_DBUS_C_PLUS_PLUG_DETAILS_DBUS_TYPE_DESERIALIZER_HPP
 #define GIO_DBUS_C_PLUS_PLUG_DETAILS_DBUS_TYPE_DESERIALIZER_HPP
 
+#include "../object-path.hpp"
+#include "../signature.hpp"
+#include "../unix-fd.hpp"
+
 #include <gio/gio.h>
 #include <memory>
 #include <string>
@@ -179,6 +183,33 @@ private:
 
         return {DBusDeserializer<T>::deserialize(
             GVariantUniquePtr(g_variant_get_child_value(message, I), &g_variant_unref).get())...};
+    }
+};
+
+template<>
+struct DBusDeserializer<ObjectPath>
+{
+    static ObjectPath deserialize(GVariant *message) noexcept
+    {
+        return {g_variant_get_string(message, nullptr)};
+    }
+};
+
+template<>
+struct DBusDeserializer<Signature>
+{
+    static Signature deserialize(GVariant *message) noexcept
+    {
+        return {g_variant_get_string(message, nullptr)};
+    }
+};
+
+template<>
+struct DBusDeserializer<UnixFD>
+{
+    static UnixFD deserialize(GVariant *message) noexcept
+    {
+        return {g_variant_get_handle(message)};
     }
 };
 

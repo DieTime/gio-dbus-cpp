@@ -3,6 +3,10 @@
 
 #include "dbus-type-traits.hpp"
 
+#include "../object-path.hpp"
+#include "../signature.hpp"
+#include "../unix-fd.hpp"
+
 #include <gio/gio.h>
 #include <string>
 #include <tuple>
@@ -166,6 +170,33 @@ private:
          ...);
 
         return g_variant_builder_end(&builder);
+    }
+};
+
+template<>
+struct DBusSerializer<ObjectPath>
+{
+    static GVariant *serialize(const ObjectPath &object_path) noexcept
+    {
+        return g_variant_new_object_path(object_path.as_string().c_str());
+    }
+};
+
+template<>
+struct DBusSerializer<Signature>
+{
+    static GVariant *serialize(const Signature &signature) noexcept
+    {
+        return g_variant_new_signature(signature.as_string().c_str());
+    }
+};
+
+template<>
+struct DBusSerializer<UnixFD>
+{
+    static GVariant *serialize(const UnixFD &unix_fd) noexcept
+    {
+        return g_variant_new_handle(unix_fd.as_number());
     }
 };
 

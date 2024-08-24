@@ -9,6 +9,14 @@
 #include <unordered_map>
 #include <vector>
 
+namespace Gio::DBus {
+
+class ObjectPath;
+class Signature;
+class UnixFD;
+
+} /* namespace Gio::DBus */
+
 namespace Gio::DBus::Details {
 
 template<typename T>
@@ -58,7 +66,6 @@ struct DBusType<uint32_t>: std::true_type
 };
 
 template<>
-
 struct DBusType<int64_t>: std::true_type
 {
     static constexpr auto name = "x"_cts;
@@ -110,6 +117,33 @@ struct DBusType<std::tuple<T, R...>>: std::true_type
     /* clang-format off */
     static constexpr auto name = "("_cts + (DBusType<T>::name + ... + DBusType<R>::name) + ")"_cts;
     static constexpr auto class_name = "std::tuple<"_cts + (DBusType<T>::class_name + ... + (", "_cts + DBusType<R>::class_name)) + ">"_cts;
+    /* clang-format on */
+};
+
+template<>
+struct DBusType<ObjectPath>: std::true_type
+{
+    /* clang-format off */
+    static constexpr auto name = "o"_cts;
+    static constexpr auto class_name = "Gio::DBus::ObjectPath"_cts;
+    /* clang-format on */
+};
+
+template<>
+struct DBusType<Signature>: std::true_type
+{
+    /* clang-format off */
+    static constexpr auto name = "g"_cts;
+    static constexpr auto class_name = "Gio::DBus::Signature"_cts;
+    /* clang-format on */
+};
+
+template<>
+struct DBusType<UnixFD>: std::true_type
+{
+    /* clang-format off */
+    static constexpr auto name = "h"_cts;
+    static constexpr auto class_name = "Gio::DBus::UnixFD"_cts;
     /* clang-format on */
 };
 

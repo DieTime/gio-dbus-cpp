@@ -5,8 +5,11 @@ dependencies = [
 sources = [
     'connection.cpp',
     'error.cpp',
+    'object-path.cpp',
     'proxy.cpp',
+    'signature.cpp',
     'timeout.cpp',
+    'unix-fd.cpp',
 ]
 
 args = [

@@ -10,7 +10,6 @@ template<size_t Size>
 class CompileTimeString
 {
 public:
-    /* NOLINTNEXTLINE(google-explicit-constructor) */
     constexpr CompileTimeString(const char (&data)[Size]) noexcept
     {
         std::copy(data, data + Size, m_data);

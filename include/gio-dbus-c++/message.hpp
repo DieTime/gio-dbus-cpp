@@ -17,7 +17,7 @@ class Message
 {
 public:
     template<typename T>
-    Message(const T &value) /* NOLINT(google-explicit-constructor) */
+    Message(const T &value)
         : m_variant(nullptr, &g_variant_unref)
     {
         using namespace Details;
@@ -102,7 +102,7 @@ public:
     }
 
     template<typename T>
-    operator T() const /* NOLINT(google-explicit-constructor) */
+    operator T() const
     {
         return as<T>();
     }
@@ -110,7 +110,7 @@ public:
 private:
     friend class ProxyImpl;
 
-    Message(GVariant *variant) /* NOLINT(google-explicit-constructor) */
+    Message(GVariant *variant)
         : m_variant(variant, &g_variant_unref)
     {
         if (!g_variant_is_of_type(variant, G_VARIANT_TYPE_TUPLE)) {

@@ -15,9 +15,9 @@ class Variant
 {
 public:
     template<typename T>
-    Variant(const T &value); /* NOLINT(google-explicit-constructor) */
+    Variant(const T &value);
 
-    Variant(GVariant *variant) /* NOLINT(google-explicit-constructor) */
+    Variant(GVariant *variant)
         : m_variant(variant, &g_variant_unref)
     {}
 

@@ -14,8 +14,8 @@ class ConnectionImpl;
 class GIO_DBUS_CPP_EXPORT Connection
 {
 public:
-    explicit Connection(ConnectionType connection_type);
-    explicit Connection(const std::string &address);
+    Connection(ConnectionType connection_type);
+    Connection(const std::string &address);
 
     virtual ~Connection();
 
