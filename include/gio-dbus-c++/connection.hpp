@@ -5,6 +5,7 @@
 #include "connection-type.hpp"
 #include "gio-types.hpp"
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -19,7 +20,12 @@ public:
 
     virtual ~Connection();
 
+    void acquire_name(const std::string &name,
+                      std::function<void(const std::string &)> on_name_acquired = nullptr,
+                      std::function<void(const std::string &)> on_name_lost = nullptr);
+
     const std::string &unique_name() const noexcept;
+    const std::string &name() const noexcept;
 
 private:
     friend class ProxyImpl;

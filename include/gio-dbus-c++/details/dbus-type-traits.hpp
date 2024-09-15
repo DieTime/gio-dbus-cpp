@@ -3,6 +3,7 @@
 
 #include "compile-time-string.hpp"
 
+#include <cstdint>
 #include <gio/gio.h>
 #include <string>
 #include <tuple>

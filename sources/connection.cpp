@@ -29,19 +29,34 @@ public:
     ConnectionImpl(ConnectionType connection_type);
     ConnectionImpl(const std::string &address);
 
+    ~ConnectionImpl();
+
+    void acquire_name(const std::string &name,
+                      std::function<void(const std::string &)> on_name_acquired,
+                      std::function<void(const std::string &)> on_name_lost);
+
     const std::string &unique_name() const noexcept;
+    const std::string &name() const noexcept;
 
     GDBusConnection *as_gio_connection() const;
 
 private:
     void setup_unique_name_with_connection(GDBusConnection *connection);
 
+    static void on_connection_name_acquired(GDBusConnection *, const char *name, void *user_data);
+    static void on_connection_name_lost(GDBusConnection *, const char *name, void *user_data);
+
     std::string m_unique_name;
+    std::string m_name;
+    unsigned int m_name_acquire_id;
+    std::function<void(const std::string &)> m_on_name_acquired;
+    std::function<void(const std::string &)> m_on_name_lost;
     std::unique_ptr<GDBusConnection, decltype(&g_object_unref)> m_connection;
 };
 
 ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
-    : m_connection(nullptr, &g_object_unref)
+    : m_name_acquire_id(0)
+    , m_connection(nullptr, &g_object_unref)
 {
     GError *_error = nullptr;
     GDBusConnection *connection = g_bus_get_sync(connection_type == ConnectionType::System
@@ -62,7 +77,8 @@ ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
 }
 
 ConnectionImpl::ConnectionImpl(const std::string &address)
-    : m_connection(nullptr, &g_object_unref)
+    : m_name_acquire_id(0)
+    , m_connection(nullptr, &g_object_unref)
 {
     GError *_error = nullptr;
     GDBusConnection *connection = g_dbus_connection_new_for_address_sync(address.data(),
@@ -81,6 +97,32 @@ ConnectionImpl::ConnectionImpl(const std::string &address)
     setup_unique_name_with_connection(connection);
 }
 
+ConnectionImpl::~ConnectionImpl()
+{
+    if (m_name_acquire_id) {
+        g_bus_unown_name(m_name_acquire_id);
+
+        if (!m_name.empty() && m_on_name_lost) {
+            m_on_name_lost(m_name);
+        }
+    }
+}
+
+void ConnectionImpl::acquire_name(const std::string &name,
+                                  std::function<void(const std::string &)> on_name_acquired,
+                                  std::function<void(const std::string &)> on_name_lost)
+{
+    m_on_name_acquired = std::move(on_name_acquired);
+    m_on_name_lost = std::move(on_name_lost);
+    m_name_acquire_id = g_bus_own_name_on_connection(m_connection.get(),
+                                                     name.c_str(),
+                                                     G_BUS_NAME_OWNER_FLAGS_NONE,
+                                                     on_connection_name_acquired,
+                                                     on_connection_name_lost,
+                                                     this,
+                                                     nullptr);
+}
+
 void ConnectionImpl::setup_unique_name_with_connection(GDBusConnection *connection)
 {
     const char *unique_name = g_dbus_connection_get_unique_name(connection);
@@ -93,9 +135,40 @@ void ConnectionImpl::setup_unique_name_with_connection(GDBusConnection *connecti
     m_connection.reset(connection);
 }
 
+void ConnectionImpl::on_connection_name_acquired(GDBusConnection *,
+                                                 const char *name,
+                                                 void *user_data)
+{
+    ConnectionImpl *connection_impl = reinterpret_cast<ConnectionImpl *>(user_data);
+    connection_impl->m_name = name;
+
+    if (connection_impl->m_on_name_acquired) {
+        connection_impl->m_on_name_acquired(name);
+    }
+}
+
+void ConnectionImpl::on_connection_name_lost(GDBusConnection *, const char *name, void *user_data)
+{
+    ConnectionImpl *connection_impl = reinterpret_cast<ConnectionImpl *>(user_data);
+    connection_impl->m_name = "";
+
+    if (connection_impl->m_on_name_lost) {
+        connection_impl->m_on_name_lost(name);
+    }
+}
+
 const std::string &ConnectionImpl::unique_name() const noexcept
 {
     return m_unique_name;
+}
+
+const std::string &ConnectionImpl::name() const noexcept
+{
+    if (m_name.empty()) {
+        return m_unique_name;
+    }
+
+    return m_name;
 }
 
 GDBusConnection *ConnectionImpl::as_gio_connection() const
@@ -113,9 +186,21 @@ Connection::Connection(const std::string &address)
 
 Connection::~Connection() = default;
 
+void Connection::acquire_name(const std::string &name,
+                              std::function<void(const std::string &)> on_name_acquired,
+                              std::function<void(const std::string &)> on_name_lost)
+{
+    m_pimpl->acquire_name(name, std::move(on_name_acquired), std::move(on_name_lost));
+}
+
 const std::string &Connection::unique_name() const noexcept
 {
     return m_pimpl->unique_name();
+}
+
+const std::string &Connection::name() const noexcept
+{
+    return m_pimpl->name();
 }
 
 GDBusConnection *Connection::as_gio_connection() const noexcept
