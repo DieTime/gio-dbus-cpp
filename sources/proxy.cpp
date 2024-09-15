@@ -72,7 +72,7 @@ ProxyImpl::ProxyImpl(Connection &connection,
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create proxy for ") + m_service
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to create proxy for ") + m_service
                                  + " service on " + m_object + " object path on " + m_interface
                                  + " interface (" + error->message + ")");
     }
@@ -110,7 +110,7 @@ Message ProxyImpl::call(const std::string &method, const Timeout &timeout)
     std::unique_ptr<GVariant, decltype(&g_variant_unref)> variant(_variant, &g_variant_unref);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to call ") + interface() + "." + method
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to call ") + interface() + "." + method
                                  + "() method using proxy for " + service() + " service on "
                                  + object() + " object path (" + error->message + ")");
     }
@@ -133,7 +133,7 @@ Message ProxyImpl::call(const std::string &method, const Message &arguments, con
     std::unique_ptr<GVariant, decltype(&g_variant_unref)> variant(_variant, &g_variant_unref);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to call ") + interface() + "." + method
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to call ") + interface() + "." + method
                                  + "() method using proxy for " + service() + " service on "
                                  + object() + " object path (" + error->message + ")");
     }

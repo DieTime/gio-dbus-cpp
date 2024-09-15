@@ -33,7 +33,7 @@ private:
     friend class ProxyImpl;
     GDBusConnection *as_gio_connection() const;
 
-    Details::LazyPimpl<ConnectionImpl> m_pimpl;
+    GIO_DBUS_CPP_DECLARE_LAZY_PIMPL_OF_TYPE(Gio::DBus::ConnectionImpl);
 };
 
 } /* namespace Gio::DBus */

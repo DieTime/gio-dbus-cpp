@@ -101,11 +101,11 @@ Variant::Variant(const T &value)
     try {
         m_variant.reset(g_varaiant_ref(DBusSerializer<T>::serialize(value)));
     }
-    catch (const std::exception &err) {
-        THROW_GIO_DBUS_CPP_ERROR(
+    catch (const std::exception &error) {
+        GIO_DBUS_CPP_THROW_ERROR(
             std::string("Failed to construct Gio::DBus::Variant from value of type T (aka ")
             + DBusType<T>::class_name.data() + " aka " + DBusType<T>::name.data()
-            + ") using Gio::DBus::Message::Message<T>(const T &)" + " (" + err.what() + ")");
+            + ") using Gio::DBus::Message::Message<T>(const T &)" + " (" + error.what() + ")");
     }
 }
 
@@ -119,7 +119,7 @@ T Variant::as() const
                   "but T is not a dbus type");
 
     if (!contains_value_of_type<T>()) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Attempt to read a value of type T (aka ")
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Attempt to read a value of type T (aka ")
                                  + DBusType<T>::class_name.data() + " aka "
                                  + DBusType<T>::name.data()
                                  + ") using Gio::DBus::Variant::as<T>(), "
@@ -131,7 +131,7 @@ T Variant::as() const
         return DBusDeserializer<T>::deserialize(as_gio_variant());
     }
     catch (const std::exception &err) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to read a value of type T (aka ")
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to read a value of type T (aka ")
                                  + DBusType<T>::class_name.data() + " aka "
                                  + DBusType<T>::name.data()
                                  + ") using Gio::DBus::Variant::as<T>() (" + err.what() + ")");

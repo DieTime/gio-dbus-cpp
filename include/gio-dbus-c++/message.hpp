@@ -37,11 +37,11 @@ public:
 
             m_variant.reset(g_variant_ref(variant));
         }
-        catch (const std::exception &err) {
-            THROW_GIO_DBUS_CPP_ERROR(
+        catch (const std::exception &error) {
+            GIO_DBUS_CPP_THROW_ERROR(
                 std::string("Failed to construct Gio::DBus::Message from value of type T (aka ")
                 + DBusType<T>::class_name.data() + " aka " + DBusType<T>::name.data()
-                + ") using Gio::DBus::Message::Message<T>(const T &)" + " (" + err.what() + ")");
+                + ") using Gio::DBus::Message::Message<T>(const T &)" + " (" + error.what() + ")");
         }
     }
 
@@ -68,7 +68,7 @@ public:
 
         if constexpr (is_tuple_type_v<T>) {
             if (!contains_value_of_type<T>()) {
-                THROW_GIO_DBUS_CPP_ERROR(std::string("Attempt to read a value of type T (aka ")
+                GIO_DBUS_CPP_THROW_ERROR(std::string("Attempt to read a value of type T (aka ")
                                          + DBusType<T>::class_name.data() + " aka "
                                          + DBusType<T>::name.data()
                                          + ") using Gio::DBus::Message::as<T>(), "
@@ -77,7 +77,7 @@ public:
             }
         } else {
             if (!contains_value_of_type<std::tuple<T>>()) {
-                THROW_GIO_DBUS_CPP_ERROR(
+                GIO_DBUS_CPP_THROW_ERROR(
                     std::string("Attempt to read a value of type std::tuple<T> (aka std::tuple<")
                     + DBusType<T>::class_name.data() + "> aka (" + DBusType<T>::name.data()
                     + ")) using Gio::DBus::Message::as<T>(), "
@@ -93,11 +93,11 @@ public:
                 return std::get<0>(DBusDeserializer<std::tuple<T>>::deserialize(as_gio_variant()));
             }
         }
-        catch (const std::exception &err) {
-            THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to read a value of type T (aka ")
-                                     + DBusType<T>::class_name.data() + " aka "
-                                     + DBusType<T>::name.data()
-                                     + ") using Gio::DBus::Message::as<T>() (" + err.what() + ")");
+        catch (const std::exception &error) {
+            GIO_DBUS_CPP_THROW_ERROR(
+                std::string("Failed to read a value of type T (aka ")
+                + DBusType<T>::class_name.data() + " aka " + DBusType<T>::name.data()
+                + ") using Gio::DBus::Message::as<T>() (" + error.what() + ")");
         }
     }
 
@@ -114,7 +114,7 @@ private:
         : m_variant(variant, &g_variant_unref)
     {
         if (!g_variant_is_of_type(variant, G_VARIANT_TYPE_TUPLE)) {
-            THROW_GIO_DBUS_CPP_ERROR("Attempt to construct Gio::DBus::Message using a GVariant "
+            GIO_DBUS_CPP_THROW_ERROR("Attempt to construct Gio::DBus::Message using a GVariant "
                                      "that is not a tuple type");
         }
     }

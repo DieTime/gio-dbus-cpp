@@ -68,7 +68,7 @@ ConnectionImpl::ConnectionImpl(ConnectionType connection_type)
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create ")
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to create ")
                                  + connection_type_to_string(connection_type) + " dbus connection ("
                                  + error->message + ")");
     }
@@ -90,7 +90,7 @@ ConnectionImpl::ConnectionImpl(const std::string &address)
     std::unique_ptr<GError, decltype(&g_error_free)> error(_error, &g_error_free);
 
     if (error) {
-        THROW_GIO_DBUS_CPP_ERROR(std::string("Failed to create dbus connection for ") + address
+        GIO_DBUS_CPP_THROW_ERROR(std::string("Failed to create dbus connection for ") + address
                                  + " address " + "(" + error->message + ")");
     }
 
@@ -128,7 +128,7 @@ void ConnectionImpl::setup_unique_name_with_connection(GDBusConnection *connecti
     const char *unique_name = g_dbus_connection_get_unique_name(connection);
 
     if (!unique_name) {
-        THROW_GIO_DBUS_CPP_ERROR("Failed to get unique name of the created dbus connection");
+        GIO_DBUS_CPP_THROW_ERROR("Failed to get unique name of the created dbus connection");
     }
 
     m_unique_name = unique_name;

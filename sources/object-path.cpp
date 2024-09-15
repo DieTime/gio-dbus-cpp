@@ -20,7 +20,7 @@ ObjectPathImpl::ObjectPathImpl(std::string object_path)
     : m_object_path(std::move(object_path))
 {
     if (!g_variant_is_object_path(m_object_path.c_str())) {
-        THROW_GIO_DBUS_CPP_ERROR(
+        GIO_DBUS_CPP_THROW_ERROR(
             "Attempt to create Gio::DBus::ObjectPath using not valid object path \"" + m_object_path
             + "\"")
     }

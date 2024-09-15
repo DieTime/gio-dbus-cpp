@@ -47,7 +47,7 @@ public:
                     const Timeout &timeout = Timeout::Default);
 
 private:
-    Details::LazyPimpl<ProxyImpl> m_pimpl;
+    GIO_DBUS_CPP_DECLARE_LAZY_PIMPL_OF_TYPE(Gio::DBus::ProxyImpl);
 };
 
 } /* namespace Gio::DBus */

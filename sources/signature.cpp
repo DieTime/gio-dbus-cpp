@@ -20,7 +20,7 @@ SignatureImpl::SignatureImpl(std::string signature)
     : m_signature(std::move(signature))
 {
     if (!g_variant_is_signature(m_signature.c_str())) {
-        THROW_GIO_DBUS_CPP_ERROR(
+        GIO_DBUS_CPP_THROW_ERROR(
             "Attempt to create Gio::DBus::Signature using not valid signature \"" + m_signature
             + "\"")
     }
