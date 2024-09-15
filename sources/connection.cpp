@@ -176,12 +176,14 @@ GDBusConnection *ConnectionImpl::as_gio_connection() const
     return m_connection.get();
 }
 
-Connection::Connection(ConnectionType connection_type)
-    : m_pimpl(std::make_unique<ConnectionImpl>(connection_type))
+Connection::Connection(ConnectionType connection_type) noexcept
+    : m_pimpl([connection_type] { return std::make_unique<ConnectionImpl>(connection_type); })
 {}
 
-Connection::Connection(const std::string &address)
-    : m_pimpl(std::make_unique<ConnectionImpl>(address))
+Connection::Connection(std::string address) noexcept
+    : m_pimpl([address = std::move(address)]() mutable {
+        return std::make_unique<ConnectionImpl>(address);
+    })
 {}
 
 Connection::~Connection() = default;
@@ -193,17 +195,17 @@ void Connection::acquire_name(const std::string &name,
     m_pimpl->acquire_name(name, std::move(on_name_acquired), std::move(on_name_lost));
 }
 
-const std::string &Connection::unique_name() const noexcept
+const std::string &Connection::unique_name() const
 {
     return m_pimpl->unique_name();
 }
 
-const std::string &Connection::name() const noexcept
+const std::string &Connection::name() const
 {
     return m_pimpl->name();
 }
 
-GDBusConnection *Connection::as_gio_connection() const noexcept
+GDBusConnection *Connection::as_gio_connection() const
 {
     return m_pimpl->as_gio_connection();
 }

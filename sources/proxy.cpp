@@ -218,26 +218,31 @@ void ProxyImpl::on_async_call_ready(GObject *object, GAsyncResult *result, gpoin
 Proxy::Proxy(Connection &connection,
              std::string service,
              std::string object_path,
-             std::string interface)
-    : m_pimpl(std::make_unique<ProxyImpl>(connection,
-                                          std::move(service),
-                                          std::move(object_path),
-                                          std::move(interface)))
+             std::string interface) noexcept
+    : m_pimpl([&connection,
+               service = std::move(service),
+               object_path = std::move(object_path),
+               interface = std::move(interface)]() mutable {
+        return std::make_unique<ProxyImpl>(connection,
+                                           std::move(service),
+                                           std::move(object_path),
+                                           std::move(interface));
+    })
 {}
 
 Proxy::~Proxy() = default;
 
-const std::string &Proxy::service() const noexcept
+const std::string &Proxy::service() const
 {
     return m_pimpl->service();
 }
 
-const std::string &Proxy::object() const noexcept
+const std::string &Proxy::object() const
 {
     return m_pimpl->object();
 }
 
-const std::string &Proxy::interface() const noexcept
+const std::string &Proxy::interface() const
 {
     return m_pimpl->interface();
 }

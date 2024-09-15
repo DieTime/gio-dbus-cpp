@@ -6,6 +6,8 @@
 #include "message.hpp"
 #include "timeout.hpp"
 
+#include "details/lazy-pimpl.hpp"
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -18,12 +20,16 @@ class ProxyImpl;
 class GIO_DBUS_CPP_EXPORT Proxy
 {
 public:
-    Proxy(Connection &connection, std::string service, std::string object, std::string interface);
+    Proxy(Connection &connection,
+          std::string service,
+          std::string object,
+          std::string interface) noexcept;
+
     virtual ~Proxy();
 
-    const std::string &service() const noexcept;
-    const std::string &object() const noexcept;
-    const std::string &interface() const noexcept;
+    const std::string &service() const;
+    const std::string &object() const;
+    const std::string &interface() const;
 
     Message call(const std::string &method, const Timeout &timeout = Timeout::Default);
     Message call(const std::string &method,
@@ -41,7 +47,7 @@ public:
                     const Timeout &timeout = Timeout::Default);
 
 private:
-    std::unique_ptr<ProxyImpl> m_pimpl;
+    Details::LazyPimpl<ProxyImpl> m_pimpl;
 };
 
 } /* namespace Gio::DBus */

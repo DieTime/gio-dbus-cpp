@@ -30,13 +30,13 @@ std::ostream &operator<<(std::ostream &stream, const Gio::DBus::Error &error)
 
 int main()
 {
-    try {
-        Gio::DBus::Connection connection(Gio::DBus::ConnectionType::Session);
-        Gio::DBus::Proxy proxy(connection,
-                               "org.freedesktop.DBus",
-                               "/org/freedesktop/DBus",
-                               "org.freedesktop.DBus");
+    Gio::DBus::Connection connection(Gio::DBus::ConnectionType::Session);
+    Gio::DBus::Proxy proxy(connection,
+                           "org.freedesktop.DBus",
+                           "/org/freedesktop/DBus",
+                           "org.freedesktop.DBus");
 
+    try {
         std::cout << connection << std::endl;
         std::cout << proxy << std::endl;
 
