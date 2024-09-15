@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "error.hpp"
 #include "message.hpp"
+#include "subscription.hpp"
 #include "timeout.hpp"
 
 #include "details/lazy-pimpl.hpp"
@@ -45,6 +46,10 @@ public:
                     const std::function<void(const Message &)> &on_success,
                     const std::function<void(const Error &)> &on_error,
                     const Timeout &timeout = Timeout::Default);
+
+    Subscription subscribe_to_signal(std::string signal_name,
+                                     std::function<void(const Message &)> on_signal_emitted);
+    void unsubscribe_from_signal(const Subscription &subscription);
 
 private:
     GIO_DBUS_CPP_DECLARE_LAZY_PIMPL_OF_TYPE(Gio::DBus::ProxyImpl);

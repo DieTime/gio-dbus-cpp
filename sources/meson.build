@@ -8,6 +8,7 @@ sources = [
     'object-path.cpp',
     'proxy.cpp',
     'signature.cpp',
+    'subscription.cpp',
     'timeout.cpp',
     'unix-fd.cpp',
 ]

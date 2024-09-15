@@ -18,7 +18,7 @@ public:
     Variant(const T &value);
 
     Variant(GVariant *variant)
-        : m_variant(variant, &g_variant_unref)
+        : m_variant(gio_variant_to_owned(variant), &g_variant_unref)
     {}
 
     template<typename T>
@@ -54,6 +54,15 @@ private:
     GVariant *as_gio_variant() const noexcept
     {
         return m_variant.get();
+    }
+
+    GVariant *gio_variant_to_owned(GVariant *variant)
+    {
+        if (g_variant_is_floating(variant)) {
+            return variant;
+        } else {
+            return g_variant_ref(variant);
+        }
     }
 
     std::unique_ptr<GVariant, decltype(&g_variant_unref)> m_variant;
@@ -99,7 +108,7 @@ Variant::Variant(const T &value)
                   "Gio::DBus::Variant::Variant<T>(const T &), but T is not a dbus type");
 
     try {
-        m_variant.reset(g_varaiant_ref(DBusSerializer<T>::serialize(value)));
+        m_variant.reset(gio_variant_to_owned(DBusSerializer<T>::serialize(value)));
     }
     catch (const std::exception &error) {
         GIO_DBUS_CPP_THROW_ERROR(
