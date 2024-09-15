@@ -12,7 +12,7 @@ public:
     UnixFD(int unix_fd);
     ~UnixFD();
 
-    int as_number() const noexcept;
+    int as_int() const noexcept;
 
 private:
     std::unique_ptr<UnixFDImpl> m_pimpl;

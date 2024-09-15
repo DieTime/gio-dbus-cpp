@@ -196,7 +196,7 @@ struct DBusSerializer<UnixFD>
 {
     static GVariant *serialize(const UnixFD &unix_fd) noexcept
     {
-        return g_variant_new_handle(unix_fd.as_number());
+        return g_variant_new_handle(unix_fd.as_int());
     }
 };
 
