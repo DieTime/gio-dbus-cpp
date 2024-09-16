@@ -1,8 +1,6 @@
 #include "proxy.hpp"
 #include "connection.hpp"
 
-#include "details/exception.hpp"
-
 #include <gio/gio.h>
 #include <iostream>
 #include <list>
@@ -12,7 +10,7 @@ namespace {
 
 struct SubscriptionContext
 {
-    size_t id;
+    size_t subscription_id;
     std::string signal_name;
     std::function<void(const Gio::DBus::Message &)> on_signal_emitted;
 };
@@ -34,22 +32,22 @@ public:
     const std::string &object() const noexcept;
     const std::string &interface() const noexcept;
 
-    Message call(const std::string &method, const Timeout &timeout);
-    Message call(const std::string &method, const Message &arguments, const Timeout &timeout);
+    Message call(const std::string &method, const Timeout &timeout) const;
+    Message call(const std::string &method, const Message &arguments, const Timeout &timeout) const;
 
     void call_async(const std::string &method,
                     const std::function<void(const Message &)> &on_success,
                     const std::function<void(const Error &)> &on_error,
-                    const Timeout &timeout);
+                    const Timeout &timeout) const;
     void call_async(const std::string &method,
                     const Message &arguments,
                     const std::function<void(const Message &)> &on_success,
                     const std::function<void(const Error &)> &on_error,
-                    const Timeout &timeout);
+                    const Timeout &timeout) const;
 
     Subscription subscribe_to_signal(std::string signal_name,
-                                     std::function<void(const Message &)> on_signal_emitted);
-    void unsubscribe_from_signal(const Subscription &subscription);
+                                     std::function<void(const Message &)> on_signal_emitted) const;
+    void unsubscribe_from_signal(const Subscription &subscription) const;
 
 private:
     static void on_async_call_ready(GObject *, GAsyncResult *, void *);
@@ -59,14 +57,14 @@ private:
     std::string m_object;
     std::string m_interface;
     std::vector<gulong> m_gio_signal_connections;
-    size_t m_signal_subscriptions_count;
-    std::list<SubscriptionContext> m_signal_subscriptions;
+    mutable size_t m_signal_subscriptions_count;
+    mutable std::list<SubscriptionContext> m_signal_subscriptions;
     std::unique_ptr<GDBusProxy, decltype(&g_object_unref)> m_proxy;
 };
 
 struct AsyncCallContext
 {
-    Gio::DBus::ProxyImpl &proxy_impl;
+    const Gio::DBus::ProxyImpl &proxy_impl;
     std::string method;
     std::function<void(const Gio::DBus::Message &)> on_success;
     std::function<void(const Gio::DBus::Error &)> on_error;
@@ -127,7 +125,7 @@ const std::string &ProxyImpl::interface() const noexcept
     return m_interface;
 }
 
-Message ProxyImpl::call(const std::string &method, const Timeout &timeout)
+Message ProxyImpl::call(const std::string &method, const Timeout &timeout) const
 {
     GError *_error = nullptr;
     GVariant *_variant = g_dbus_proxy_call_sync(m_proxy.get(),
@@ -150,7 +148,9 @@ Message ProxyImpl::call(const std::string &method, const Timeout &timeout)
     return {variant.release()};
 }
 
-Message ProxyImpl::call(const std::string &method, const Message &arguments, const Timeout &timeout)
+Message ProxyImpl::call(const std::string &method,
+                        const Message &arguments,
+                        const Timeout &timeout) const
 {
     GError *_error = nullptr;
     GVariant *_variant = g_dbus_proxy_call_sync(m_proxy.get(),
@@ -176,7 +176,7 @@ Message ProxyImpl::call(const std::string &method, const Message &arguments, con
 void ProxyImpl::call_async(const std::string &method,
                            const std::function<void(const Message &)> &on_success,
                            const std::function<void(const Error &)> &on_error,
-                           const Timeout &timeout)
+                           const Timeout &timeout) const
 {
     g_dbus_proxy_call(m_proxy.get(),
                       method.data(),
@@ -197,7 +197,7 @@ void ProxyImpl::call_async(const std::string &method,
                            const Message &arguments,
                            const std::function<void(const Message &)> &on_success,
                            const std::function<void(const Error &)> &on_error,
-                           const Timeout &timeout)
+                           const Timeout &timeout) const
 {
     g_dbus_proxy_call(m_proxy.get(),
                       method.data(),
@@ -214,24 +214,26 @@ void ProxyImpl::call_async(const std::string &method,
                       });
 }
 
-Subscription ProxyImpl::subscribe_to_signal(std::string signal_name,
-                                            std::function<void(const Message &)> on_signal_emitted)
+Subscription ProxyImpl::subscribe_to_signal(
+    std::string signal_name, std::function<void(const Message &)> on_signal_emitted) const
 {
-    m_signal_subscriptions.emplace_back(m_signal_subscriptions_count,
-                                        std::move(signal_name),
-                                        std::move(on_signal_emitted));
+    m_signal_subscriptions.push_back({
+        m_signal_subscriptions_count,
+        std::move(signal_name),
+        std::move(on_signal_emitted),
+    });
 
     return {reinterpret_cast<uintptr_t>(this), m_signal_subscriptions_count++};
 }
 
-void ProxyImpl::unsubscribe_from_signal(const Subscription &subscription)
+void ProxyImpl::unsubscribe_from_signal(const Subscription &subscription) const
 {
     if (subscription.proxy_id() != reinterpret_cast<uintptr_t>(this)) {
         return;
     }
 
     m_signal_subscriptions.remove_if([&subscription](const SubscriptionContext &context) {
-        return context.id == subscription.id();
+        return context.subscription_id == subscription.id();
     });
 }
 
@@ -268,59 +270,53 @@ void ProxyImpl::on_async_call_ready(GObject *object, GAsyncResult *result, void 
     }
 }
 
-void ProxyImpl::on_any_signal(GDBusProxy *,
-                              const char *,
-                              const char *signal_name,
-                              GVariant *parameters,
-                              void *user_data)
+void ProxyImpl::on_any_signal(
+    GDBusProxy *, const char *, const char *signal_name, GVariant *parameters, void *user_data)
 {
-    ProxyImpl *proxy_impl = reinterpret_cast<ProxyImpl*>(user_data);
+    ProxyImpl *proxy_impl = reinterpret_cast<ProxyImpl *>(user_data);
 
-    for (const auto &subscription_context : proxy_impl->m_signal_subscriptions) {
+    for (const auto &subscription_context: proxy_impl->m_signal_subscriptions) {
         if (subscription_context.signal_name == signal_name) {
             subscription_context.on_signal_emitted(parameters);
         }
     }
 }
 
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(Proxy, ProxyImpl)
+
 Proxy::Proxy(Connection &connection,
              std::string service,
              std::string object_path,
-             std::string interface) noexcept
-    : m_pimpl([&connection,
-               service = std::move(service),
-               object_path = std::move(object_path),
-               interface = std::move(interface)]() mutable {
-        return std::make_unique<ProxyImpl>(connection,
-                                           std::move(service),
-                                           std::move(object_path),
-                                           std::move(interface));
-    })
+             std::string interface)
+    : m_pimpl(std::make_unique<ProxyImpl>(connection,
+                                          std::move(service),
+                                          std::move(object_path),
+                                          std::move(interface)))
 {}
 
-Proxy::~Proxy() = default;
-
-const std::string &Proxy::service() const
+const std::string &Proxy::service() const noexcept
 {
     return m_pimpl->service();
 }
 
-const std::string &Proxy::object() const
+const std::string &Proxy::object() const noexcept
 {
     return m_pimpl->object();
 }
 
-const std::string &Proxy::interface() const
+const std::string &Proxy::interface() const noexcept
 {
     return m_pimpl->interface();
 }
 
-Message Proxy::call(const std::string &method, const Timeout &timeout)
+Message Proxy::call(const std::string &method, const Timeout &timeout) const
 {
     return m_pimpl->call(method, timeout);
 }
 
-Message Proxy::call(const std::string &method, const Message &arguments, const Timeout &timeout)
+Message Proxy::call(const std::string &method,
+                    const Message &arguments,
+                    const Timeout &timeout) const
 {
     return m_pimpl->call(method, arguments, timeout);
 }
@@ -328,7 +324,7 @@ Message Proxy::call(const std::string &method, const Message &arguments, const T
 void Proxy::call_async(const std::string &method,
                        const std::function<void(const Message &)> &on_success,
                        const std::function<void(const Error &)> &on_error,
-                       const Timeout &timeout)
+                       const Timeout &timeout) const
 {
     m_pimpl->call_async(method, on_success, on_error, timeout);
 }
@@ -337,18 +333,18 @@ void Proxy::call_async(const std::string &method,
                        const Message &arguments,
                        const std::function<void(const Message &)> &on_success,
                        const std::function<void(const Error &)> &on_error,
-                       const Timeout &timeout)
+                       const Timeout &timeout) const
 {
     m_pimpl->call_async(method, arguments, on_success, on_error, timeout);
 }
 
 Subscription Proxy::subscribe_to_signal(std::string signal_name,
-                                        std::function<void(const Message &)> on_signal_emitted)
+                                        std::function<void(const Message &)> on_signal_emitted) const
 {
-    return m_pimpl->subscribe_to_signal(signal_name, std::move(on_signal_emitted));
+    return m_pimpl->subscribe_to_signal(std::move(signal_name), std::move(on_signal_emitted));
 }
 
-void Proxy::unsubscribe_from_signal(const Subscription &subscription)
+void Proxy::unsubscribe_from_signal(const Subscription &subscription) const
 {
     m_pimpl->unsubscribe_from_signal(subscription);
 }

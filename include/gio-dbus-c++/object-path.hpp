@@ -1,22 +1,23 @@
 #ifndef GIO_DBUS_CPP_OBJECT_PATH_HPP
 #define GIO_DBUS_CPP_OBJECT_PATH_HPP
 
-#include <memory>
+#include "common.hpp"
+
+#include "details/pimpl.hpp"
+
 #include <string>
 
 namespace Gio::DBus {
 
 class ObjectPathImpl;
-class ObjectPath
+class GIO_DBUS_CPP_EXPORT_CLASS(ObjectPath)
 {
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(ObjectPath, ObjectPathImpl)
+
 public:
     ObjectPath(std::string object_path);
-    ~ObjectPath();
 
     const std::string &as_string() const noexcept;
-
-private:
-    std::unique_ptr<ObjectPathImpl> m_pimpl;
 };
 
 } /* namespace Gio::DBus */

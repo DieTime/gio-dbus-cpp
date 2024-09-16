@@ -30,35 +30,7 @@ size_t SubscriptionImpl::id() const noexcept
     return m_id;
 }
 
-Subscription::Subscription(const Subscription& other)
-    : m_pimpl(std::make_unique<SubscriptionImpl>(*other.m_pimpl))
-{}
-
-Subscription& Subscription::operator=(const Subscription& other)
-{
-    if (this != &other) {
-        m_pimpl = std::make_unique<SubscriptionImpl>(*other.m_pimpl);
-    }
-
-    return *this;
-}
-
-Subscription::Subscription(Subscription&& other) noexcept
-    : m_pimpl(std::move(other.m_pimpl))
-{}
-
-Subscription& Subscription::operator=(Subscription&& other) noexcept
-{
-    if (this != &other) {
-        m_pimpl = std::move(other.m_pimpl);
-    }
-
-    return *this;
-}
-
-Subscription::Subscription() = default;
-
-Subscription::~Subscription() = default;
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(Subscription, SubscriptionImpl)
 
 Subscription::Subscription(uintptr_t proxy_id, size_t id)
     : m_pimpl(std::make_unique<SubscriptionImpl>(proxy_id, id))

@@ -28,15 +28,28 @@ std::ostream &operator<<(std::ostream &stream, const Gio::DBus::Error &error)
     return stream;
 }
 
+void on_name_owner_changed(const std::tuple<std::string, std::string, std::string> &data)
+{
+    std::cout << "NameOwnerChanged:" << std::endl
+              << "   - Name: '" << std::get<0>(data) << "'" << std::endl
+              << "   - Previous: '" << std::get<1>(data) << "'" << std::endl
+              << "   - New: '" << std::get<2>(data) << "'" << std::endl
+              << std::endl;
+}
+
 int main()
 {
-    Gio::DBus::Connection connection(Gio::DBus::ConnectionType::Session);
-    Gio::DBus::Proxy proxy(connection,
-                           "org.freedesktop.DBus",
-                           "/org/freedesktop/DBus",
-                           "org.freedesktop.DBus");
+    Gio::DBus::Connection connection;
+    Gio::DBus::Proxy proxy;
+    Gio::DBus::Subscription subscription;
 
     try {
+        connection = Gio::DBus::Connection(Gio::DBus::ConnectionType::Session);
+        proxy = Gio::DBus::Proxy(connection,
+                                 "org.freedesktop.DBus",
+                                 "/org/freedesktop/DBus",
+                                 "org.freedesktop.DBus");
+
         std::cout << connection << std::endl;
         std::cout << proxy << std::endl;
 
@@ -46,6 +59,8 @@ int main()
         for (const auto &name: names) {
             std::cout << "  - '" << name << "'" << std::endl;
         }
+
+        subscription = proxy.subscribe_to_signal("NameOwnerChanged", on_name_owner_changed);
     }
     catch (const Gio::DBus::Error &error) {
         std::cerr << error << std::endl;

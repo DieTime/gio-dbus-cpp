@@ -1,21 +1,21 @@
 #ifndef GIO_DBUS_CPP_UNIX_FD_HPP
 #define GIO_DBUS_CPP_UNIX_FD_HPP
 
-#include <memory>
+#include "common.hpp"
+
+#include "details/pimpl.hpp"
 
 namespace Gio::DBus {
 
 class UnixFDImpl;
-class UnixFD
+class GIO_DBUS_CPP_EXPORT_CLASS(UnixFD)
 {
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(UnixFD, UnixFDImpl)
+
 public:
     UnixFD(int unix_fd);
-    ~UnixFD();
 
     int as_int() const noexcept;
-
-private:
-    std::unique_ptr<UnixFDImpl> m_pimpl;
 };
 
 } /* namespace Gio::DBus */

@@ -1,5 +1,4 @@
 #include "unix-fd.hpp"
-#include "details/exception.hpp"
 
 #include <gio/gio.h>
 
@@ -25,11 +24,11 @@ int UnixFDImpl::as_int() const noexcept
     return m_unix_fd;
 }
 
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(UnixFD, UnixFDImpl)
+
 UnixFD::UnixFD(int unix_fd)
     : m_pimpl(std::make_unique<UnixFDImpl>(unix_fd))
 {}
-
-UnixFD::~UnixFD() = default;
 
 int UnixFD::as_int() const noexcept
 {

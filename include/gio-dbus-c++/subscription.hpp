@@ -3,31 +3,22 @@
 
 #include "common.hpp"
 
-#include <memory>
+#include "details/pimpl.hpp"
 
 namespace Gio::DBus {
 
 class SubscriptionImpl;
-class GIO_DBUS_CPP_EXPORT Subscription
+class GIO_DBUS_CPP_EXPORT_CLASS(Subscription)
 {
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(Subscription, SubscriptionImpl)
+
 public:
-    Subscription();
-    ~Subscription();
-
-    Subscription(const Subscription& other);
-    Subscription& operator=(const Subscription& other);
-
-    Subscription(Subscription&& other) noexcept;
-    Subscription& operator=(Subscription&& other) noexcept;
-
     uintptr_t proxy_id() const noexcept;
     size_t id() const noexcept;
 
 private:
     friend class ProxyImpl;
     Subscription(uintptr_t proxy_id, size_t id);
-
-    std::unique_ptr<SubscriptionImpl> m_pimpl;
 };
 
 } /* namespace Gio::DBus */

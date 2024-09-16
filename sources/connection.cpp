@@ -1,8 +1,6 @@
 #include "connection.hpp"
 #include "error.hpp"
 
-#include "details/exception.hpp"
-
 #include <gio/gio.h>
 
 namespace {
@@ -33,7 +31,7 @@ public:
 
     void acquire_name(const std::string &name,
                       std::function<void(const std::string &)> on_name_acquired,
-                      std::function<void(const std::string &)> on_name_lost);
+                      std::function<void(const std::string &)> on_name_lost) noexcept;
 
     const std::string &unique_name() const noexcept;
     const std::string &name() const noexcept;
@@ -110,7 +108,7 @@ ConnectionImpl::~ConnectionImpl()
 
 void ConnectionImpl::acquire_name(const std::string &name,
                                   std::function<void(const std::string &)> on_name_acquired,
-                                  std::function<void(const std::string &)> on_name_lost)
+                                  std::function<void(const std::string &)> on_name_lost) noexcept
 {
     m_on_name_acquired = std::move(on_name_acquired);
     m_on_name_lost = std::move(on_name_lost);
@@ -176,36 +174,34 @@ GDBusConnection *ConnectionImpl::as_gio_connection() const
     return m_connection.get();
 }
 
-Connection::Connection(ConnectionType connection_type) noexcept
-    : m_pimpl([connection_type] { return std::make_unique<ConnectionImpl>(connection_type); })
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(Connection, ConnectionImpl)
+
+Connection::Connection(ConnectionType connection_type)
+    : m_pimpl(std::make_unique<ConnectionImpl>(connection_type))
 {}
 
-Connection::Connection(std::string address) noexcept
-    : m_pimpl([address = std::move(address)]() mutable {
-        return std::make_unique<ConnectionImpl>(address);
-    })
+Connection::Connection(const std::string &address)
+    : m_pimpl(std::make_unique<ConnectionImpl>(address))
 {}
-
-Connection::~Connection() = default;
 
 void Connection::acquire_name(const std::string &name,
                               std::function<void(const std::string &)> on_name_acquired,
-                              std::function<void(const std::string &)> on_name_lost)
+                              std::function<void(const std::string &)> on_name_lost) noexcept
 {
     m_pimpl->acquire_name(name, std::move(on_name_acquired), std::move(on_name_lost));
 }
 
-const std::string &Connection::unique_name() const
+const std::string &Connection::unique_name() const noexcept
 {
     return m_pimpl->unique_name();
 }
 
-const std::string &Connection::name() const
+const std::string &Connection::name() const noexcept
 {
     return m_pimpl->name();
 }
 
-GDBusConnection *Connection::as_gio_connection() const
+GDBusConnection *Connection::as_gio_connection() const noexcept
 {
     return m_pimpl->as_gio_connection();
 }
