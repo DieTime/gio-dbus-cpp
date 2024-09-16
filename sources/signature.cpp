@@ -1,5 +1,4 @@
 #include "signature.hpp"
-#include "details/exception.hpp"
 
 #include <gio/gio.h>
 
@@ -31,11 +30,11 @@ const std::string &SignatureImpl::as_string() const noexcept
     return m_signature;
 }
 
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(Signature, SignatureImpl)
+
 Signature::Signature(std::string signature)
     : m_pimpl(std::make_unique<SignatureImpl>(std::move(signature)))
 {}
-
-Signature::~Signature() = default;
 
 const std::string &Signature::as_string() const noexcept
 {

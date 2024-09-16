@@ -1,22 +1,23 @@
 #ifndef GIO_DBUS_CPP_SIGNATURE_HPP
 #define GIO_DBUS_CPP_SIGNATURE_HPP
 
-#include <memory>
+#include "common.hpp"
+
+#include "details/pimpl.hpp"
+
 #include <string>
 
 namespace Gio::DBus {
 
 class SignatureImpl;
-class Signature
+class GIO_DBUS_CPP_EXPORT_CLASS(Signature)
 {
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(Signature, SignatureImpl)
+
 public:
     Signature(std::string signature);
-    ~Signature();
 
     const std::string &as_string() const noexcept;
-
-private:
-    std::unique_ptr<SignatureImpl> m_pimpl;
 };
 
 } /* namespace Gio::DBus */

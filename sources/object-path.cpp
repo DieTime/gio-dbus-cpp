@@ -1,5 +1,4 @@
 #include "object-path.hpp"
-#include "details/exception.hpp"
 
 #include <gio/gio.h>
 
@@ -31,11 +30,11 @@ const std::string &ObjectPathImpl::as_string() const noexcept
     return m_object_path;
 }
 
+GIO_DBUS_CPP_IMPLEMENT_PIMPL_PARTS(ObjectPath, ObjectPathImpl)
+
 ObjectPath::ObjectPath(std::string object_path)
     : m_pimpl(std::make_unique<ObjectPathImpl>(std::move(object_path)))
 {}
-
-ObjectPath::~ObjectPath() = default;
 
 const std::string &ObjectPath::as_string() const noexcept
 {

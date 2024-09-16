@@ -10,7 +10,8 @@
 namespace Gio::DBus {
 
 class ErrorImpl;
-class GIO_DBUS_CPP_EXPORT Error: public std::exception
+class GIO_DBUS_CPP_EXPORT_CLASS(Error)
+    : public std::exception
 {
 public:
     Error(std::string name, std::string message) noexcept;

@@ -5,35 +5,32 @@
 #include "connection-type.hpp"
 #include "gio-types.hpp"
 
-#include "details/lazy-pimpl.hpp"
+#include "details/pimpl.hpp"
 
 #include <functional>
-#include <memory>
 #include <string>
 
 namespace Gio::DBus {
 
 class ConnectionImpl;
-class GIO_DBUS_CPP_EXPORT Connection
+class GIO_DBUS_CPP_EXPORT_CLASS(Connection)
 {
-public:
-    Connection(ConnectionType connection_type) noexcept;
-    Connection(std::string address) noexcept;
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(Connection, ConnectionImpl)
 
-    virtual ~Connection();
+public:
+    Connection(ConnectionType connection_type);
+    Connection(const std::string &address);
 
     void acquire_name(const std::string &name,
                       std::function<void(const std::string &)> on_name_acquired = nullptr,
-                      std::function<void(const std::string &)> on_name_lost = nullptr);
+                      std::function<void(const std::string &)> on_name_lost = nullptr) noexcept;
 
-    const std::string &unique_name() const;
-    const std::string &name() const;
+    const std::string &unique_name() const noexcept;
+    const std::string &name() const noexcept;
 
 private:
     friend class ProxyImpl;
-    GDBusConnection *as_gio_connection() const;
-
-    GIO_DBUS_CPP_DECLARE_LAZY_PIMPL_OF_TYPE(Gio::DBus::ConnectionImpl);
+    GDBusConnection *as_gio_connection() const noexcept;
 };
 
 } /* namespace Gio::DBus */

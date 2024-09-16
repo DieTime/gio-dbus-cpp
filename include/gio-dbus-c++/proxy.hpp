@@ -7,10 +7,9 @@
 #include "subscription.hpp"
 #include "timeout.hpp"
 
-#include "details/lazy-pimpl.hpp"
+#include "details/pimpl.hpp"
 
 #include <functional>
-#include <memory>
 #include <string>
 
 namespace Gio::DBus {
@@ -18,41 +17,35 @@ namespace Gio::DBus {
 class Connection;
 
 class ProxyImpl;
-class GIO_DBUS_CPP_EXPORT Proxy
+class GIO_DBUS_CPP_EXPORT_CLASS(Proxy)
 {
+    GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(Proxy, ProxyImpl)
+
 public:
-    Proxy(Connection &connection,
-          std::string service,
-          std::string object,
-          std::string interface) noexcept;
+    Proxy(Connection &connection, std::string service, std::string object, std::string interface);
 
-    virtual ~Proxy();
+    const std::string &service() const noexcept;
+    const std::string &object() const noexcept;
+    const std::string &interface() const noexcept;
 
-    const std::string &service() const;
-    const std::string &object() const;
-    const std::string &interface() const;
-
-    Message call(const std::string &method, const Timeout &timeout = Timeout::Default);
+    Message call(const std::string &method, const Timeout &timeout = Timeout::Default) const;
     Message call(const std::string &method,
                  const Message &arguments,
-                 const Timeout &timeout = Timeout::Default);
+                 const Timeout &timeout = Timeout::Default) const;
 
     void call_async(const std::string &method,
                     const std::function<void(const Message &)> &on_success,
                     const std::function<void(const Error &)> &on_error,
-                    const Timeout &timeout = Timeout::Default);
+                    const Timeout &timeout = Timeout::Default) const;
     void call_async(const std::string &method,
                     const Message &arguments,
                     const std::function<void(const Message &)> &on_success,
                     const std::function<void(const Error &)> &on_error,
-                    const Timeout &timeout = Timeout::Default);
+                    const Timeout &timeout = Timeout::Default) const;
 
     Subscription subscribe_to_signal(std::string signal_name,
-                                     std::function<void(const Message &)> on_signal_emitted);
-    void unsubscribe_from_signal(const Subscription &subscription);
-
-private:
-    GIO_DBUS_CPP_DECLARE_LAZY_PIMPL_OF_TYPE(Gio::DBus::ProxyImpl);
+                                     std::function<void(const Message &)> on_signal_emitted) const;
+    void unsubscribe_from_signal(const Subscription &subscription) const;
 };
 
 } /* namespace Gio::DBus */

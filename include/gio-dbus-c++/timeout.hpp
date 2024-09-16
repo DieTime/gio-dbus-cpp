@@ -8,7 +8,7 @@
 
 namespace Gio::DBus {
 
-class GIO_DBUS_CPP_EXPORT Timeout
+class GIO_DBUS_CPP_EXPORT_CLASS(Timeout)
 {
 public:
     static inline constexpr std::chrono::milliseconds Default{-1};
