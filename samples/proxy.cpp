@@ -39,11 +39,13 @@ void on_name_owner_changed(const std::tuple<std::string, std::string, std::strin
 
 int main()
 {
+    Gio::Context context;
     Gio::DBus::Connection connection;
     Gio::DBus::Proxy proxy;
     Gio::DBus::Subscription subscription;
 
     try {
+        context = Gio::Context(Gio::ContextType::Global);
         connection = Gio::DBus::Connection(Gio::DBus::ConnectionType::Session);
         proxy = Gio::DBus::Proxy(connection,
                                  "org.freedesktop.DBus",
@@ -60,10 +62,12 @@ int main()
             std::cout << "  - '" << name << "'" << std::endl;
         }
 
-        subscription = proxy.subscribe_to_signal("NameOwnerChanged", on_name_owner_changed);
+        proxy.subscribe_to_signal("NameOwnerChanged", on_name_owner_changed);
+        context.start();
     }
     catch (const Gio::DBus::Error &error) {
         std::cerr << error << std::endl;
+        return 1;
     }
 
     return 0;

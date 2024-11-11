@@ -4,6 +4,7 @@ dependencies = [
 
 sources = [
     'connection.cpp',
+    'context.cpp',
     'error.cpp',
     'object-path.cpp',
     'proxy.cpp',

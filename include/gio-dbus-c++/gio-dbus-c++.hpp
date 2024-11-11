@@ -2,6 +2,7 @@
 #define GIO_DBUS_CPP_GIO_DBUS_CPP_HPP
 
 #include "connection.hpp"
+#include "context.hpp"
 #include "proxy.hpp"
 #include "variant.hpp"
 
