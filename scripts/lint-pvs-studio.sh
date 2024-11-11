@@ -11,12 +11,9 @@ meson setup --wipe "$BUILD_ROOT" "$PROJECT_ROOT"
 
 PVS_LOG_FILE="$PROJECT_ROOT/.pvs.log"
 PVS_ERROR_FILE="$PROJECT_ROOT/.pvs.errors"
-PVS_SARIF_FILE="$PROJECT_ROOT/.pvs.sarif"
 
 pvs-studio-analyzer analyze -f "$BUILD_ROOT/compile_commands.json" -o "$PVS_LOG_FILE" -j
-
 plog-converter -a GA:1,2 -t errorfile-verbose -o "$PVS_ERROR_FILE" "$PVS_LOG_FILE" > /dev/null
-plog-converter -a GA:1,2 -t sarif-vscode -o "$PVS_SARIF_FILE" "$PVS_LOG_FILE" > /dev/null
 
 rm "$PVS_LOG_FILE"
 
@@ -26,6 +23,5 @@ if [ -s "$PROJECT_ROOT/.pvs.errors" ]; then
     exit 1
 else
     rm "$PVS_ERROR_FILE"
-    rm "$PVS_SARIF_FILE"
     exit 0
 fi
