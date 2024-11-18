@@ -2,10 +2,13 @@
 #define GIO_DBUS_CPP_CONTEXT_HPP
 
 #include "common.hpp"
+#include "context-job.hpp"
 #include "context-type.hpp"
 #include "timeout.hpp"
 
 #include "details/pimpl.hpp"
+
+#include <functional>
 
 namespace Gio {
 
@@ -22,6 +25,11 @@ public:
 
     void push_thread_default() const;
     void pop_thread_default() const;
+
+    ContextJob add_one_shot_job(const Timeout &timeout, std::function<void()> callback) const;
+    ContextJob add_periodic_job(const Timeout &timeout, std::function<void()> callback) const;
+
+    void remove_job(const ContextJob &job) const;
 };
 
 } /* namespace Gio */
