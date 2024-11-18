@@ -13,12 +13,12 @@ class GIO_DBUS_CPP_EXPORT_CLASS(Subscription)
     GIO_DBUS_CPP_DECLARE_PIMPL_PARTS(Subscription, SubscriptionImpl)
 
 public:
-    uintptr_t proxy_id() const noexcept;
-    size_t id() const noexcept;
+    uint64_t proxy_id() const noexcept;
+    uint64_t id() const noexcept;
 
 private:
     friend class ProxyImpl;
-    Subscription(uintptr_t proxy_id, size_t id);
+    Subscription(uint64_t proxy_id, uint64_t id);
 };
 
 } /* namespace Gio::DBus */

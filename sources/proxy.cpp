@@ -10,7 +10,7 @@ namespace {
 
 struct SubscriptionContext
 {
-    size_t subscription_id;
+    uint64_t subscription_id;
     std::string signal_name;
     std::function<void(const Gio::DBus::Message &)> on_signal_emitted;
 };
@@ -57,7 +57,7 @@ private:
     std::string m_object;
     std::string m_interface;
     std::vector<gulong> m_gio_signal_connections;
-    mutable size_t m_signal_subscriptions_count;
+    mutable uint64_t m_signal_subscriptions_count;
     mutable std::list<SubscriptionContext> m_signal_subscriptions;
     std::unique_ptr<GDBusProxy, decltype(&g_object_unref)> m_proxy;
 };
@@ -223,12 +223,12 @@ Subscription ProxyImpl::subscribe_to_signal(
         std::move(on_signal_emitted),
     });
 
-    return {reinterpret_cast<uintptr_t>(this), m_signal_subscriptions_count++};
+    return {reinterpret_cast<uint64_t>(this), m_signal_subscriptions_count++};
 }
 
 void ProxyImpl::unsubscribe_from_signal(const Subscription &subscription) const
 {
-    if (subscription.proxy_id() != reinterpret_cast<uintptr_t>(this)) {
+    if (subscription.proxy_id() != reinterpret_cast<uint64_t>(this)) {
         return;
     }
 
