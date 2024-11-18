@@ -37,6 +37,16 @@ void on_name_owner_changed(const std::tuple<std::string, std::string, std::strin
               << std::endl;
 }
 
+void do_one_shot_job()
+{
+    std::cout << "Oneshot!" << std::endl;
+}
+
+void do_periodic_job()
+{
+    std::cout << "Periodic!" << std::endl;
+}
+
 int main()
 {
     Gio::Context context;
@@ -63,6 +73,9 @@ int main()
         }
 
         proxy.subscribe_to_signal("NameOwnerChanged", on_name_owner_changed);
+
+        context.add_one_shot_job(std::chrono::seconds(1), do_one_shot_job);
+        context.add_periodic_job(std::chrono::seconds(1), do_periodic_job);
         context.start();
     }
     catch (const Gio::DBus::Error &error) {
