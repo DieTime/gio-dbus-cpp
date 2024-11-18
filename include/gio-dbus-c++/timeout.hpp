@@ -6,7 +6,7 @@
 #include <chrono>
 #include <limits>
 
-namespace Gio::DBus {
+namespace Gio {
 
 class GIO_DBUS_CPP_EXPORT_CLASS(Timeout)
 {
@@ -25,6 +25,6 @@ private:
     int m_milliseconds;
 };
 
-} /* namespace Gio::DBus */
+} /* namespace Gio */
 
 #endif /* GIO_DBUS_CPP_TIMEOUT_HPP */
