@@ -21,28 +21,28 @@ jobs:
       run: |
         wget "https://files.pvs-studio.com/pvs-studio-$PVS_STUDIO_VERSION-amd64.deb"
         sudo dpkg -i "pvs-studio-$PVS_STUDIO_VERSION-amd64.deb"
-        sudo apt-get install -f -qq
+        sudo apt-get install -f
 
     - name: Configure PVS-Studio
       run: pvs-studio-analyzer credentials ${{ secrets.PVS_STUDIO_CREDENTIALS }}
 
     - name: Setup python3
-      run: sudo apt-get install -qq -y python3 python3-pip
+      run: sudo apt-get install -y python3 python3-pip
 
     - name: Setup ninja-build
-      run: sudo apt-get install -qq -y ninja-build
+      run: sudo apt-get install -y ninja-build
 
     - name: Setup meson
       run: python3 -m pip install meson
 
     - name: Setup glib-2.0
-      run: sudo apt-get install -qq -y libglib2.0-dev
+      run: sudo apt-get install -y libglib2.0-dev
 
     - name: Setup clang-format-15
-      run: sudo apt-get install -qq -y clang-format-15
+      run: sudo apt-get install -y clang-format-15
 
     - name: Setup clang-tidy-15
-      run: sudo apt-get install -qq -y clang-tidy-15
+      run: sudo apt-get install -y clang-tidy-15
 
     - name: Lint clang-format
       run: scripts/lint-clang-format.sh
