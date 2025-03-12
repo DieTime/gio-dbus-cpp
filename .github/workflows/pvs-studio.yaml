@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup PVS-Studio
         env:
-          PVS_STUDIO_VERSION: 7.34.87460.207
+          PVS_STUDIO_VERSION: 7.35.89650.344
         run: |
           wget "https://files.pvs-studio.com/pvs-studio-$PVS_STUDIO_VERSION-amd64.deb"
           sudo dpkg -i "pvs-studio-$PVS_STUDIO_VERSION-amd64.deb"
